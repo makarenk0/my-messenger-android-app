@@ -26,20 +26,29 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-import TcpSocket from 'react-native-tcp-socket';
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
+
+import connectionReducer from './src/reducers/ConnectionReducer';
 import MyTestTCP from './src/components/MyTestTCP.js'
+import Test2 from './src/components/Test2'
 
 
 
-
+const store = createStore(connectionReducer)
 
 export default function App() {
   
 
-  const options = {port: 20, host: '192.168.1.19'};  //'34.89.236.76'
+  //const options = {port: 20, host: '192.168.1.19'};  //'34.89.236.76'
 
-  const [clientConnection, setclientConnection] = useState(TcpSocket.createConnection(options, () => {}));
-  return(<View><Text>text</Text><MyTestTCP connection={clientConnection}></MyTestTCP></View>)
+  //const [clientConnection, setclientConnection] = useState(TcpSocket.createConnection(options, () => {}));
+  return(<View>
+            <Provider store={store}>
+                <MyTestTCP></MyTestTCP>
+                {/* <Test2></Test2> */}
+            </Provider>
+        </View>)
 }
 
 // const styles = StyleSheet.create({
