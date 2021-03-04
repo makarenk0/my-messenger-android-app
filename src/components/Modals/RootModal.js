@@ -1,11 +1,10 @@
 import * as React from 'react';
-import {Modal, Button, View} from 'react-native';
+import {useRef} from 'react'
+import {Modal, Button, View, StyleSheet, Animated, Easing} from 'react-native';
 import {connect} from 'react-redux';
 import Error from './Error';
 import Success from './Success';
 
-// import our new actions
-import {hideModal} from '../../store/modules/Modal/ModalActions';
 
 const Modals = {
   Error: Error,
@@ -13,43 +12,39 @@ const Modals = {
 };
 
 const RootModal = (props) => {
-    const {id, modalProps, hideModal} = props;
+  const {id, modalProps} = props;
 
-    // assign a constant that is either one of our custom views or a noop function if the id is not set
-    const ModalView = Modals[id] || function() {};
+  const ModalView = Modals[id] || function () {};
 
-    return (
-      // show the Modal if the id is set to a truthy value
-      <Modal visible={Boolean(id)} animationType="fade" testID="modal" >
-        <View
-          style={{
-            flex: 1,
-            padding: 20,
-            justifyContent: 'space-between',
-          }}>
-          {/* inject the custom view */}
-          <ModalView {...modalProps} />
-          <Button onPress={hideModal} title="Close" color="blue" />
-        </View>
-      </Modal>
-    );
-}
+  const transAnim = useRef(new Animated.Value(-40)).current;
 
-const mapStateToProps = state => {
+    Animated.timing(transAnim, {
+      toValue: 0,
+      duration: 1000,
+      useNativeDriver: true,
+      easing: Easing.bounce,
+    }).start();
+  
+
+  return (
+    Boolean(id) ?
+    <Animated.View style={{width: '100%', position: 'absolute', translateY: transAnim, height: 40, backgroundColor: '#67daf9'}}>
+      <ModalView {...modalProps} />
+    </Animated.View> : null
+  );
+};
+//{/* <Button onPress={hideModal} title="Close" color="blue" /> */}
+
+const mapStateToProps = (state) => {
   return {
     id: state.ModalReducer.id,
     modalProps: state.ModalReducer.modalProps,
   };
 };
 
-// add hideModal action to props
-const mapDispatchToProps = {
-  hideModal: hideModal,
-};
 
 const ConnectedRootModal = connect(
   mapStateToProps,
-  mapDispatchToProps,
 )(RootModal);
 
 export default ConnectedRootModal;

@@ -1,7 +1,7 @@
-export const connectToServer = (ipAddress, portNumber) => (
+export const connectToServer = (ipAddress, portNumber, onSuccessfullConnect) => (
     {
       type: 'CONNECT',
-      payload: {'port': portNumber, 'host': ipAddress}
+      payload: {'port': portNumber, 'host': ipAddress, 'onSuccessfullConnect': onSuccessfullConnect}
     }
   );
 

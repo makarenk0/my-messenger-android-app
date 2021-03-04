@@ -41,16 +41,13 @@ import LogInScreen from './src/components/LogInScreen';
 import SignUpScreen from './src/components/SignUpScreen';
 import SlidingAlert from './src/components/SlidingAlert';
 import RootModal from './src/components/Modals/RootModal'
-//import store from './src/store';
-import {ModalReducer} from './src/store/modules/Modal/ModalReducer';
-import {combineReducers} from 'redux';
-import {configureStore} from '@reduxjs/toolkit';
 
-// const store = configureStore({
-//   reducer: combineReducers({
-//     modal: ModalReducer,
-//   }, connectionReducer),
-// });
+
+import {ModalReducer} from './src/reducers/ModalReducer';
+import {combineReducers} from 'redux';
+
+
+
 
 const store = createStore(combineReducers({connectionReducer, ModalReducer}))
 
@@ -67,7 +64,6 @@ export default function App() {
 
   return (
     <Provider store={store}>
-     
         <NavigationContainer>
           <Stack.Navigator>
             <Stack.Screen

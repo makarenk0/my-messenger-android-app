@@ -16,11 +16,19 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
   switch (action.type) {
     case 'CONNECT':
       
-      console.log("Trying to connect")
+  
       var establishedConnection = TcpSocket.createConnection(
-        action.payload,
-        () => {},
+        {'port': action.payload.port, 'host': action.payload.host},
+        (address) => {action.payload.onSuccessfullConnect(address)}
       );
+   
+      
+      // establishedConnection.on('close', function(){
+      //   console.log('Connection closed!');
+      // });
+      // establishedConnection.on('error', function(){
+      //   console.log('Error');
+      // });
 
       current['establishedConnection'] = establishedConnection;
       const newState = {current, possible};

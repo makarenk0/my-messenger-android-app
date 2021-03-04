@@ -1,32 +1,24 @@
-  
 import {combineReducers} from 'redux';
+import {createReducer} from '@reduxjs/toolkit';
 
-const INITIAL_STATE = {};
+const ID_INITIAL_STATE = '';
 
+const id = createReducer(ID_INITIAL_STATE, {
+  
+  ['MODAL__SET_ID'](state, {payload}) {
+    return payload;
+  },
+});
 
-const modalReducer = (state = INITIAL_STATE, action) => {
-    console.log(action)
-    switch(action.type){
-        case 'MODAL__SET_ID':
-            console.log('MODAL__SET_ID')
-            state['id'] = action.payload.id
-            return state
-        default:
-            return state
-    }
-}
-// export const modalProps = createReducer(MODAL_PROPS_INITIAL_STATE, {
-//   ["MODAL__SET_MODAL_PROPS"](state, { payload }) {
-//     return payload;
-//   }
-// });
+const MODAL_PROPS_INITIAL_STATE = {};
 
-// export const ModalReducer = combineReducers({
-//   id,
-//   modalProps
-// });
+const modalProps = createReducer(MODAL_PROPS_INITIAL_STATE, {
+  ['MODAL__SET_MODAL_PROPS'](state, {payload}) {
+    return payload;
+  },
+});
 
-
-export default combineReducers({
-    modal: modalReducer,
+export const ModalReducer = combineReducers({
+  id,
+  modalProps,
 });

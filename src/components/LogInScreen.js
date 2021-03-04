@@ -12,40 +12,66 @@ import {
   Button,
   Alert,
 } from 'react-native';
-import { greaterThan } from 'react-native-reanimated';
-import {SlidingAlert, show} from './SlidingAlert';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import {ModalActions} from '../store/modules/Modal/ModalActions'
-import {showModal} from '../store/modules/Modal/ModalActions'
-//import {showModal} from '../store/modules/Modal/ModalActions'
-import { connectToServer, initDiffieHellman } from '../actions/ConnectionActions';
+
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
+import {showModal, hideModal} from '../actions/ModalActions';
+import {connectToServer, initDiffieHellman} from '../actions/ConnectionActions';
 
 const LogInScreen = (props) => {
+  //props.connectToServer('192.168.1.19', 20)
+
+  useEffect(() => {
+
+    
+    async function connect() {
+        // await props.connectToServer('192.168.1.19', 20, (address) =>{
+
+        // });
+    }
+    connect()
+  }, []);
+
+
+
   const [loginValue, setLoginValue] = React.useState('');
   const [passwordValue, setpasswordValue] = React.useState('');
 
   const signInButtonPressed = () => {
-    console.log(props.connectToServer)
+    props.hideModal()
+    //props.connectToServer('192.168.1.19', 20);
+    //console.log(props.connectToServer);
     //props.showModal({id: 'Success'});
-    props.connectToServer('192.168.1.19', 20)
-  }
+  };
 
   const signUpButtonPressed = () => {
-    console.log(props)
     props.showModal({id: 'Success'});
-   //props.navigation.navigate('Sign Up', { name: 'Jane' })
-  }
+    //props.navigation.navigate('Sign Up', { name: 'Jane' })
+  };
 
   return (
     <View style={styles.mainContainer}>
-      <Image source={require('../images/logo.png')} style={styles.logoImage}></Image>
-      <TextInput style = {styles.inputStyle} value={loginValue} onChangeText={text => setLoginValue(text)} placeholder="Login"></TextInput>
-      <TextInput style = {styles.inputStyle} value={passwordValue} onChangeText={text => setPasswordValue(text)} placeholder="Password"></TextInput>
-      <TouchableOpacity style = {styles.signInButton} onPress={signInButtonPressed}>
+      <Image
+        source={require('../images/logo.png')}
+        style={styles.logoImage}></Image>
+      <TextInput
+        style={styles.inputStyle}
+        value={loginValue}
+        onChangeText={(text) => setLoginValue(text)}
+        placeholder="Login"></TextInput>
+      <TextInput
+        style={styles.inputStyle}
+        value={passwordValue}
+        onChangeText={(text) => setPasswordValue(text)}
+        placeholder="Password"></TextInput>
+      <TouchableOpacity
+        style={styles.signInButton}
+        onPress={signInButtonPressed}>
         <Text style={{fontSize: 20}}>Sign in</Text>
       </TouchableOpacity>
-      <TouchableOpacity style = {styles.signUpButton} onPress={signUpButtonPressed}>
+      <TouchableOpacity
+        style={styles.signUpButton}
+        onPress={signUpButtonPressed}>
         <Text style={{fontSize: 20}}>Sign up</Text>
       </TouchableOpacity>
     </View>
@@ -53,10 +79,10 @@ const LogInScreen = (props) => {
 };
 
 const styles = StyleSheet.create({
-  mainContainer:{
+  mainContainer: {
     alignItems: 'center',
   },
-  logoImage:{
+  logoImage: {
     width: 250,
     height: 250,
     resizeMode: 'contain',
@@ -78,7 +104,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: "#67daf9",
+    backgroundColor: '#67daf9',
   },
   signUpButton: {
     width: 200,
@@ -87,34 +113,31 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: "#67daf9",
+    borderColor: '#67daf9',
   },
-
 });
 
-const mapStateToProps = state => {
-  console.log(state)
-  const { connectionReducer, ModalReducer} = state
+const mapStateToProps = (state) => {
+  console.log(state);
+  const {connectionReducer, ModalReducer} = state;
   return {
     ModalReducer,
     connectionReducer,
   };
 };
 
-const mapDispatchToProps = {
-  showModal: showModal,
-  connectToServer: connectToServer,
-};
-
-// const mapDispatchToProps = dispatch => (
-//   bindActionCreators({
-//     connectToServer,
-//     initDiffieHellman,
-//   }, dispatch)
-// );
-
+const mapDispatchToProps = (dispatch) =>
+  bindActionCreators(
+    {
+      hideModal,
+      showModal,
+      connectToServer,
+      initDiffieHellman,
+    },
+    dispatch,
+  );
 
 const ConnectedLogInScreen = connect(
   mapStateToProps,
@@ -122,4 +145,3 @@ const ConnectedLogInScreen = connect(
 )(LogInScreen);
 
 export default ConnectedLogInScreen;
-
