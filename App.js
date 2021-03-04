@@ -5,7 +5,7 @@
  * @format
  * @flow strict-local
  */
-
+import 'react-native-gesture-handler';
 import React, {useState, useEffect} from 'react';
 import {
   SafeAreaView,
@@ -14,6 +14,7 @@ import {
   View,
   Text,
   StatusBar,
+  Modal,
   Button,
   Alert,
 } from 'react-native';
@@ -26,30 +27,64 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-import { Provider } from 'react-redux';
-import { createStore } from 'redux';
+import {Provider} from 'react-redux';
+import {createStore} from 'redux';
 
 import connectionReducer from './src/reducers/ConnectionReducer';
-import MyTestTCP from './src/components/MyTestTCP.js'
-import Test2 from './src/components/Test2'
+//import modalReducer from './src/reducers/ModalReducer';
+import MyTestTCP from './src/components/MyTestTCP.js';
+import Test2 from './src/components/Test2';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+
+import LogInScreen from './src/components/LogInScreen';
+import SignUpScreen from './src/components/SignUpScreen';
+import SlidingAlert from './src/components/SlidingAlert';
+import RootModal from './src/components/Modals/RootModal'
+//import store from './src/store';
+import {ModalReducer} from './src/store/modules/Modal/ModalReducer';
+import {combineReducers} from 'redux';
+import {configureStore} from '@reduxjs/toolkit';
+
+// const store = configureStore({
+//   reducer: combineReducers({
+//     modal: ModalReducer,
+//   }, connectionReducer),
+// });
+
+const store = createStore(combineReducers({connectionReducer, ModalReducer}))
+
+const Stack = createStackNavigator();
 
 
-
-const store = createStore(connectionReducer)
 
 export default function App() {
-  
-
+ 
   //const options = {port: 20, host: '192.168.1.19'};  //'34.89.236.76'
-
   //const [clientConnection, setclientConnection] = useState(TcpSocket.createConnection(options, () => {}));
-  return(<View>
-            <Provider store={store}>
-                <MyTestTCP></MyTestTCP>
-                {/* <Test2></Test2> */}
-            </Provider>
-        </View>)
+
+
+
+  return (
+    <Provider store={store}>
+     
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen
+              name="LogInScreen"
+              component={LogInScreen}
+              options={{headerShown: false}}
+            />
+            {/* <MyTestTCP></MyTestTCP> */}
+            <Stack.Screen name="Sign Up" component={SignUpScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+        <RootModal />
+      {/* <Modal animationType="slide" visible={modalVisibility} transparent={true}><Text>This is modal</Text></Modal> */}
+    </Provider>
+  );
 }
+
 
 // const styles = StyleSheet.create({
 //   container: {

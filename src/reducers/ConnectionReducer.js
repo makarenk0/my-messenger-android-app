@@ -12,10 +12,11 @@ var onReceiveCallbacks = []
 
 const connectionReducer = (state = INITIAL_STATE, action) => {
   const {current, possible} = state;
+  
   switch (action.type) {
     case 'CONNECT':
       
-
+      console.log("Trying to connect")
       var establishedConnection = TcpSocket.createConnection(
         action.payload,
         () => {},
@@ -64,3 +65,6 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
 export default combineReducers({
   connection: connectionReducer,
 });
+// export const ConnectionReducer = combineReducers({
+//   connectionReducer
+// });

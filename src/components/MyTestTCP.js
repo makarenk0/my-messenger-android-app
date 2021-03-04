@@ -10,9 +10,6 @@ import {
     Alert,
   } from 'react-native';
 
-
-
-import {receivePacketFromServer, sendPacketToServer} from '../protocol_modules/network_module'
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { connectToServer, initDiffieHellman } from '../actions/ConnectionActions';
@@ -52,7 +49,7 @@ const MyTestTCP = (props) =>{
     // }, [])
     
     const buttonClick = () =>{
-      props.connectToServer('192.168.1.19', 20)
+      props.connectToServer('34.89.236.76', 20)
       
       //sendPacketToServer("InitDiffieHellman", props.connection)
       

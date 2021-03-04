@@ -10,7 +10,6 @@ import {
     Alert,
   } from 'react-native';
 
-import {receivePacketFromServer, sendPacketToServer} from '../protocol_modules/network_module'
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { connectToServer } from '../actions/ConnectionActions';
