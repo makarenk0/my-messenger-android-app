@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {useRef} from 'react';
 import {
   ActivityIndicator,
   Text,
@@ -9,19 +8,20 @@ import {
   Easing,
 } from 'react-native';
 
-const Success = (props) => {
+const Loading = (props) => {
   return (
     <View style={styles.mainView}>
       <ActivityIndicator size="large" color="#fff" style={styles.loaderStyle} />
-      <Text style={styles.loaderText}>Connecting...</Text>
+      <Text style={styles.loaderText}>{props.displayText}</Text>
     </View>
   );
 };
-//style={{translateY: transAnim, height: 40, backgroundColor: '#67daf9'}}
+
 const styles = StyleSheet.create({
   mainView: {
     height: 40,
     flexDirection: 'row',
+    backgroundColor: '#67daf9',
   },
   loaderStyle: {
     marginLeft: 20
@@ -33,4 +33,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default Success;
+export default Loading;

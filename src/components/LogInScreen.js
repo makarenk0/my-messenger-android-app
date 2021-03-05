@@ -22,31 +22,49 @@ const LogInScreen = (props) => {
   //props.connectToServer('192.168.1.19', 20)
 
   useEffect(() => {
-
-    
     async function connect() {
-        // await props.connectToServer('192.168.1.19', 20, (address) =>{
-
-        // });
+      let connected = false;
+      const checkConnection = () => {
+        props.hideModal();
+        if (!connected) {
+          props.showModal('Error', {
+            displayText: 'Failed to connect to server...',
+          });
+          console.log('Not connected!!!!');
+        }
+      };
+      await props.connectToServer(
+        '192.168.1.19',
+        20,
+        (address) => {
+          console.log('Connected!!!!');
+          connected = true;
+        },
+        () => {
+          props.showModal('Error', {
+            displayText: 'Server closed connection',
+          })
+        },
+      );
+      props.showModal('Loading', {displayText: 'Connecting to server...'});
+      setTimeout(checkConnection, 5000);
     }
-    connect()
+    connect();
   }, []);
-
-
 
   const [loginValue, setLoginValue] = React.useState('');
   const [passwordValue, setpasswordValue] = React.useState('');
 
   const signInButtonPressed = () => {
-    props.hideModal()
+    //props.hideModal();
     //props.connectToServer('192.168.1.19', 20);
     //console.log(props.connectToServer);
     //props.showModal({id: 'Success'});
   };
 
   const signUpButtonPressed = () => {
-    props.showModal({id: 'Success'});
-    //props.navigation.navigate('Sign Up', { name: 'Jane' })
+    //props.showModal('Success', {displayText: 'Connecting to server...'});
+    props.navigation.navigate('Sign Up', { name: 'Jane' })
   };
 
   return (
@@ -120,7 +138,6 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state) => {
-  console.log(state);
   const {connectionReducer, ModalReducer} = state;
   return {
     ModalReducer,

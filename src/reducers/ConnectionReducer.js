@@ -20,7 +20,7 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       var establishedConnection = TcpSocket.createConnection(
         {'port': action.payload.port, 'host': action.payload.host},
         (address) => {action.payload.onSuccessfullConnect(address)}
-      );
+      ).on('error', () => {action.payload.onServerClosedConnection()});;
    
       
       // establishedConnection.on('close', function(){

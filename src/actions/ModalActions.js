@@ -1,13 +1,13 @@
-export const showModal = ({id}) => (
+export const showModal = (id, parametrs = {}) => (
     {
-      type: 'MODAL__SET_ID',
-      payload: id,
+      type: 'SHOW_ALERT',
+      payload: {'id': id, "parametrs": parametrs}
     }
 )
 
-export const hideModal = () => (
+export const hideModal = (parametrs = {}) => (
     {
-      type: 'MODAL__SET_ID',
-      payload: '',
+      type: 'HIDE_ALERT',
+      payload: {'id': '', "parametrs": parametrs},
     }
 )

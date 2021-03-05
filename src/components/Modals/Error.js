@@ -1,21 +1,33 @@
-import * as React from "react";
-import { Text, View } from "react-native";
+import * as React from 'react';
+import {
+  ActivityIndicator,
+  Text,
+  View,
+  StyleSheet,
+  Modal,
+  Easing,
+} from 'react-native';
 
-export default class Error extends React.Component {
-  render() {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "space-between"
-        }}
-      >
-        <View />
-        <Text style={{ fontSize: 25, color: "red", textAlign: "center" }}>
-          There has been an error.
-        </Text>
-        <View />
-      </View>
-    );
+const Error = (props) => {
+  return (
+    <View style={styles.mainView}>
+      <Text style={styles.loaderText}>{props.displayText}</Text>
+    </View>
+  );
+};
+
+
+const styles = StyleSheet.create({
+  mainView: {
+    height: 40,
+    flexDirection: 'row',
+    backgroundColor: '#a52a2a',
+  },
+  loaderText: {
+    marginLeft: 20,
+    fontSize: 20,
+    textAlignVertical: 'center',
   }
-}
+});
+
+export default Error;
