@@ -14,6 +14,6 @@ export const initDiffieHellman = () => (
 export const sendDataToServer = (packetType, packetPayload, callback) => (
     {
       type: 'SEND_RECEIVE_DATA',
-      payload: {'packetType': packetType, 'payload': packetPayload, 'callback': callback}
+      payload: {'packetType': packetType, 'packetPayload': packetPayload, 'callback': callback}
     }
 );

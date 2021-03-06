@@ -1,6 +1,7 @@
 import {combineReducers} from 'redux';
 import TcpSocket from 'react-native-tcp-socket';
 import {NativeModules} from 'react-native'
+import {AES_ITERATIONS_NUMBER, AES_KEY_LENGTH} from '../configs'
 const { EncryptionModule } = NativeModules;
 
 const INITIAL_STATE = {
@@ -52,7 +53,7 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
             current.establishedConnection.write(packetToSend)
             onReceiveCallbacks.unshift((data) => {
               let dataJSON = JSON.parse(data)
-              EncryptionModule.generateDerivedKey(dataJSON.Public_key, (derivedKey) => {
+              EncryptionModule.generateDerivedKey(dataJSON.Public_key, AES_ITERATIONS_NUMBER, AES_KEY_LENGTH, (derivedKey) => {
                 console.log("Derived key:")
                 console.log(derivedKey)
               })}
@@ -61,10 +62,12 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
         return state
 
     case 'SEND_RECEIVE_DATA':
+      console.log(action.payload.packetPayload)
         EncryptionModule.encryptMessage(action.payload.packetType, action.payload.packetPayload, (packetToSend) => {
             current.establishedConnection.write(packetToSend)
             onReceiveCallbacks.unshift(action.payload.callback)
         })
+        return state
     default:
       return state;
   }

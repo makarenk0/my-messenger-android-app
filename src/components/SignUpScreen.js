@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -16,18 +16,22 @@ import {
 const SignUpScreen = (props) => {
 
   const [loginValue, setLoginValue] = useState('');
-  const [passwordValue, setpasswordValue] = useState('');
+  const [passwordValue, setPasswordValue] = useState('');
+  const [errorText, setErrorText] = useState('');
 
-  const signInButtonPressed = () => {
-      
-  }
-
+  var passwordReg = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
   const signUpButtonPressed = () => {
-   props.navigation.navigate('Sign Up', { name: 'Jane' })
+   if(!passwordReg.test(passwordValue)){
+    setErrorText("Password must contain:\nat least 1 lowercase character,\nat least 1 uppercase character,\nat least 1 numeric character,\nat least one special character,\nmust be eight characters or longer")
+    return
+   }
+   props.c
+  
   }
 
   return (
     <View style={styles.mainContainer}>
+      <Text style={styles.inputErrorText}>{errorText}</Text>
       <TextInput
         style={styles.inputStyle}
         value={loginValue}
@@ -36,7 +40,7 @@ const SignUpScreen = (props) => {
       <TextInput
         style={styles.inputStyle}
         value={passwordValue}
-        onChangeText={(text) => setPasswordValue(text)}
+        onChangeText={(text) => {setPasswordValue(text); setErrorText('')}}
         placeholder="Password"></TextInput>
       <TouchableOpacity
         style={styles.signUpButton}
@@ -70,7 +74,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: "#67daf9",
   },
-
+  inputErrorText: {
+    position: 'absolute',
+    color: '#a52a2a',
+    marginTop: 100,
+  }
 });
 
 export default SignUpScreen;

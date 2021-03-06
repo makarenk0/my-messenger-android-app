@@ -16,7 +16,8 @@ import {
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {showModal, hideModal} from '../actions/ModalActions';
-import {connectToServer, initDiffieHellman} from '../actions/ConnectionActions';
+import {connectToServer, initDiffieHellman, sendDataToServer} from '../actions/ConnectionActions';
+import {LOCAL_SERVER_IP, SERVER_PORT, CONNECTING_TIMEOUT_MILLIS} from '../configs'
 
 const LogInScreen = (props) => {
   //props.connectToServer('192.168.1.19', 20)
@@ -34,11 +35,15 @@ const LogInScreen = (props) => {
         }
       };
       await props.connectToServer(
-        '192.168.1.19',
-        20,
+        LOCAL_SERVER_IP,
+        SERVER_PORT,
         (address) => {
           console.log('Connected!!!!');
           connected = true;
+
+          //Diffie-Hellman right after establishing connection with server
+          props.initDiffieHellman()
+
         },
         () => {
           props.showModal('Error', {
@@ -47,7 +52,7 @@ const LogInScreen = (props) => {
         },
       );
       props.showModal('Loading', {displayText: 'Connecting to server...'});
-      setTimeout(checkConnection, 5000);
+      setTimeout(checkConnection, CONNECTING_TIMEOUT_MILLIS);
     }
     connect();
   }, []);
@@ -60,6 +65,10 @@ const LogInScreen = (props) => {
     //props.connectToServer('192.168.1.19', 20);
     //console.log(props.connectToServer);
     //props.showModal({id: 'Success'});
+    props.sendDataToServer(1, "hello from encrypted client", (dataFromServer) => {
+      console.log("Data from server decrypted:")
+      console.log(dataFromServer)
+    })
   };
 
   const signUpButtonPressed = () => {
@@ -152,6 +161,7 @@ const mapDispatchToProps = (dispatch) =>
       showModal,
       connectToServer,
       initDiffieHellman,
+      sendDataToServer,
     },
     dispatch,
   );

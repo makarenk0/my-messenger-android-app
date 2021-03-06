@@ -70,7 +70,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @ReactMethod(isBlockingSynchronousMethod = true)
-    public void generateDerivedKey(String serverPublicKey, Callback callBack) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchProviderException {
+    public void generateDerivedKey(String serverPublicKey, int aesIterationNum, int aesKeyLength, Callback callBack) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchProviderException {
         KeyFactory kf = KeyFactory.getInstance("EC");
 
         byte[] serverPublicKeyDecodedBase64 = Base64.getDecoder().decode(serverPublicKey);
@@ -89,13 +89,20 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
         hash.update(sharedSecret);
         byte[] derivedKey = hash.digest();
 
+        //Configuring Aes module
+        AesBase64Wrapper.set_derivedKey(derivedKey); // setting derived key to aes encryption module
+        AesBase64Wrapper.set_AESIterationsNum(aesIterationNum); // setting iterations number of aes algorithm
+        AesBase64Wrapper.set_AESKeyLength(aesKeyLength); // setting key length of aes algorithm
+        //------------------------
+
         callBack.invoke(new String(Base64.getEncoder().encode(derivedKey)));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @ReactMethod(isBlockingSynchronousMethod = true)
     public void encryptMessage(int packetType, String payloadJSON, Callback callBack){
-        byte[] result = pureAssemble((char)packetType, payloadJSON);
+        byte[] result = pureAssemble((char)(packetType+'0'), payloadJSON);
+        callBack.invoke(new String(result));
     }
 
 
@@ -131,9 +138,15 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
         return results;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private byte[] decryptAES256(String encryptedData){
+        AesBase64Wrapper aesDecryptor = new AesBase64Wrapper();
         byte[] decrypted = null;
-        // NOT IMPLEMENTED YET
+        try {
+            decrypted = aesDecryptor.decodeAndDecrypt(encryptedData).getBytes();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return decrypted;
     }
 
@@ -146,7 +159,8 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
             payloadBytes = Base64.getEncoder().encode(payloadJSON.getBytes());
         }
         else{
-            payloadBytes = Base64.getEncoder().encode(payloadJSON.getBytes());   // ENCRYPT WITH DERIVED KEY HERE
+            AesBase64Wrapper aesEncryptor = new AesBase64Wrapper();
+            payloadBytes = aesEncryptor.encryptAndEncode(payloadJSON).getBytes();   // ENCRYPT WITH DERIVED KEY HERE
         }
 
         byte[] result = new byte[1 + payloadBytes.length + 1];
