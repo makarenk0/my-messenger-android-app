@@ -6,13 +6,12 @@ const { EncryptionModule } = NativeModules;
 
 const INITIAL_STATE = {
   current: {},
-  possible: {},
 };
 
 var onReceiveCallbacks = []
 
 const connectionReducer = (state = INITIAL_STATE, action) => {
-  const {current, possible} = state;
+  const {current} = state;
   
   switch (action.type) {
     case 'CONNECT':
@@ -21,7 +20,7 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       var establishedConnection = TcpSocket.createConnection(
         {'port': action.payload.port, 'host': action.payload.host},
         (address) => {action.payload.onSuccessfullConnect(address)}
-      ).on('error', () => {action.payload.onServerClosedConnection()});;
+      ).on('error', () => {action.payload.onServerClosedConnection()})
    
       
       // establishedConnection.on('close', function(){
@@ -32,7 +31,7 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       // });
 
       current['establishedConnection'] = establishedConnection;
-      const newState = {current, possible};
+      
       
       current.establishedConnection.on('data', function (data) {
             var result = "";
@@ -41,18 +40,19 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
             }
             EncryptionModule.disassemblePacketFromReact(result, (disassembled) => {
                 let onReceive = onReceiveCallbacks.pop()
-                onReceive(disassembled)
+                let getObj = JSON.parse(disassembled)
+                onReceive(getObj)
             })
       });
       
+      const newState = {current};
       return newState;
 
     case 'DIFFIE_HELLMAN':
         
         EncryptionModule.generateKeyPair((packetToSend) => {
             current.establishedConnection.write(packetToSend)
-            onReceiveCallbacks.unshift((data) => {
-              let dataJSON = JSON.parse(data)
+            onReceiveCallbacks.unshift((dataJSON) => {
               EncryptionModule.generateDerivedKey(dataJSON.Public_key, AES_ITERATIONS_NUMBER, AES_KEY_LENGTH, (derivedKey) => {
                 console.log("Derived key:")
                 console.log(derivedKey)
@@ -63,11 +63,15 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
 
     case 'SEND_RECEIVE_DATA':
       console.log(action.payload.packetPayload)
+      
         EncryptionModule.encryptMessage(action.payload.packetType, action.payload.packetPayload, (packetToSend) => {
-            current.establishedConnection.write(packetToSend)
-            onReceiveCallbacks.unshift(action.payload.callback)
+          current.establishedConnection.write(packetToSend)
+          onReceiveCallbacks.unshift(action.payload.callback)
         })
-        return state
+      return state
+    case 'SET_SESSION_TOKEN':
+      current['sessionToken'] = action.payload;
+      return {current}
     default:
       return state;
   }

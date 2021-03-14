@@ -4,6 +4,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
   TextInput,
   View,
   Text,
@@ -16,11 +17,13 @@ import {
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {showModal, hideModal} from '../actions/ModalActions';
-import {connectToServer, initDiffieHellman, sendDataToServer} from '../actions/ConnectionActions';
+import {connectToServer, initDiffieHellman, sendDataToServer, setSessionToken} from '../actions/ConnectionActions';
 import {LOCAL_SERVER_IP, SERVER_PORT, CONNECTING_TIMEOUT_MILLIS} from '../configs'
 
 const LogInScreen = (props) => {
   //props.connectToServer('192.168.1.19', 20)
+  const [errorText, setErrorText] = useState('');
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     async function connect() {
@@ -58,17 +61,39 @@ const LogInScreen = (props) => {
   }, []);
 
   const [loginValue, setLoginValue] = React.useState('');
-  const [passwordValue, setpasswordValue] = React.useState('');
+  const [passwordValue, setPasswordValue] = React.useState('');
 
   const signInButtonPressed = () => {
+    setErrorText('')
+    let regObj = {
+      Login: loginValue,
+      Password: passwordValue,
+    };
+    setLoading(true)
+
+    props.sendDataToServer(2, regObj, (response) => {
+        if (response.Status == 'error') {
+          setErrorText(response.Details);
+        }
+        else{
+          props.setSessionToken(response.SessionToken)
+          props.navigation.navigate('Home')
+        }
+        //console.log(props.connectionReducer.connection.current.sessionToken)
+        setLoading(false)
+      });
+    
+    
+    
+    
     //props.hideModal();
     //props.connectToServer('192.168.1.19', 20);
     //console.log(props.connectToServer);
     //props.showModal({id: 'Success'});
-    props.sendDataToServer(1, "hello from encrypted client", (dataFromServer) => {
-      console.log("Data from server decrypted:")
-      console.log(dataFromServer)
-    })
+    // props.sendDataToServer(1, "hello from encrypted client", (dataFromServer) => {
+    //   console.log("Data from server decrypted:")
+    //   console.log(dataFromServer)
+    // })
   };
 
   const signUpButtonPressed = () => {
@@ -91,6 +116,7 @@ const LogInScreen = (props) => {
         value={passwordValue}
         onChangeText={(text) => setPasswordValue(text)}
         placeholder="Password"></TextInput>
+      <Text style={styles.inputErrorText}>{errorText}</Text>
       <TouchableOpacity
         style={styles.signInButton}
         onPress={signInButtonPressed}>
@@ -101,6 +127,7 @@ const LogInScreen = (props) => {
         onPress={signUpButtonPressed}>
         <Text style={{fontSize: 20}}>Sign up</Text>
       </TouchableOpacity>
+      <ActivityIndicator animating={loading} size="large" color="#67daf9"/>
     </View>
   );
 };
@@ -127,7 +154,7 @@ const styles = StyleSheet.create({
   signInButton: {
     width: 200,
     height: 50,
-    marginTop: 100,
+    marginTop: 50,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -143,6 +170,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#67daf9',
+  },
+  inputErrorText: {
+    color: '#a52a2a',
+    marginTop: 20,
   },
 });
 
@@ -162,6 +193,7 @@ const mapDispatchToProps = (dispatch) =>
       connectToServer,
       initDiffieHellman,
       sendDataToServer,
+      setSessionToken,
     },
     dispatch,
   );

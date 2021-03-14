@@ -14,6 +14,13 @@ export const initDiffieHellman = () => (
 export const sendDataToServer = (packetType, packetPayload, callback) => (
     {
       type: 'SEND_RECEIVE_DATA',
-      payload: {'packetType': packetType, 'packetPayload': packetPayload, 'callback': callback}
+      payload: {'packetType': packetType, 'packetPayload': typeof packetPayload === 'string' ? packetPayload : JSON.stringify(packetPayload), 'callback': callback}
     }
+);
+
+export const setSessionToken = (token) => (
+  {
+    type: 'SET_SESSION_TOKEN',
+    payload: token
+  }
 );

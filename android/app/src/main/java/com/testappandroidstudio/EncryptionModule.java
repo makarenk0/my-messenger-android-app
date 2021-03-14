@@ -50,7 +50,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    @ReactMethod(isBlockingSynchronousMethod = true)
+    @ReactMethod//(isBlockingSynchronousMethod = true)
     public void generateKeyPair(Callback callBack) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchProviderException {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
         kpg.initialize(256);
@@ -69,7 +69,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    @ReactMethod(isBlockingSynchronousMethod = true)
+    @ReactMethod//(isBlockingSynchronousMethod = true)
     public void generateDerivedKey(String serverPublicKey, int aesIterationNum, int aesKeyLength, Callback callBack) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, NoSuchProviderException {
         KeyFactory kf = KeyFactory.getInstance("EC");
 
@@ -99,7 +99,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    @ReactMethod(isBlockingSynchronousMethod = true)
+    @ReactMethod//(isBlockingSynchronousMethod = true)
     public void encryptMessage(int packetType, String payloadJSON, Callback callBack){
         byte[] result = pureAssemble((char)(packetType+'0'), payloadJSON);
         callBack.invoke(new String(result));
@@ -107,7 +107,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    @ReactMethod(isBlockingSynchronousMethod = true)
+    @ReactMethod//(isBlockingSynchronousMethod = true)
     private void disassemblePacketFromReact(String data, Callback callback){
         ArrayList<String> res = disassemblePacket(data);
         for(String str : res){
