@@ -71,16 +71,17 @@ const LogInScreen = (props) => {
     };
     setLoading(true)
 
-    props.sendDataToServer(2, regObj, (response) => {
+    props.sendDataToServer(2, true ,regObj, (response) => {
+        setLoading(false)
         if (response.Status == 'error') {
           setErrorText(response.Details);
         }
         else{
+          
           props.setSessionToken(response.SessionToken)
           props.navigation.navigate('Home')
         }
         //console.log(props.connectionReducer.connection.current.sessionToken)
-        setLoading(false)
       });
     
     

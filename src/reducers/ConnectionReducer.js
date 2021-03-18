@@ -1,7 +1,7 @@
 import {combineReducers} from 'redux';
 import TcpSocket from 'react-native-tcp-socket';
 import {NativeModules} from 'react-native'
-import {AES_ITERATIONS_NUMBER, AES_KEY_LENGTH} from '../configs'
+import {KEY_DERIVATION_ITERATIONS_NUMBER, AES_KEY_LENGTH} from '../configs'
 const { EncryptionModule } = NativeModules;
 
 const INITIAL_STATE = {
@@ -39,9 +39,16 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
                 result += String.fromCharCode(parseInt(data[i]));
             }
             EncryptionModule.disassemblePacketFromReact(result, (disassembled) => {
-                let onReceive = onReceiveCallbacks.pop()
+                let onReceive = onReceiveCallbacks.find(x => x.type == result.charAt(0))
+                console.log(onReceiveCallbacks)
+                if(onReceive.disposable){  // if disposable use callback once and then remove object from callbacks array
+                  let index = onReceiveCallbacks.findIndex(x => x.type == result.charAt(0))
+                  onReceiveCallbacks.splice(index, 1)
+                  console.log("Callback with type "+onReceive.type+ " was disposed")
+                }
                 let getObj = JSON.parse(disassembled)
-                onReceive(getObj)
+                console.log(getObj)
+                onReceive.callback(getObj)
             })
       });
       
@@ -52,12 +59,12 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
         
         EncryptionModule.generateKeyPair((packetToSend) => {
             current.establishedConnection.write(packetToSend)
-            onReceiveCallbacks.unshift((dataJSON) => {
-              EncryptionModule.generateDerivedKey(dataJSON.Public_key, AES_ITERATIONS_NUMBER, AES_KEY_LENGTH, (derivedKey) => {
+            onReceiveCallbacks.unshift({"type": '0', "disposable": true, "callback": (dataJSON) => {
+              EncryptionModule.generateDerivedKey(dataJSON.Public_key, KEY_DERIVATION_ITERATIONS_NUMBER, AES_KEY_LENGTH, (derivedKey) => {
                 console.log("Derived key:")
                 console.log(derivedKey)
               })}
-            )
+            })
         })
         return state
 
@@ -66,9 +73,14 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       
         EncryptionModule.encryptMessage(action.payload.packetType, action.payload.packetPayload, (packetToSend) => {
           current.establishedConnection.write(packetToSend)
-          onReceiveCallbacks.unshift(action.payload.callback)
+          onReceiveCallbacks.unshift({ "type": String.fromCharCode(action.payload.packetType + 48), "disposable": action.payload.disposable, "callback": action.payload.callback})
         })
       return state
+      
+    case 'SUBSCRIBE_FOR_SERVER_EVENTS':
+      onReceiveCallbacks.unshift({ "type": String.fromCharCode(action.payload.packetType + 48), "disposable": false, "callback": action.payload.callback})
+      return state
+
     case 'SET_SESSION_TOKEN':
       current['sessionToken'] = action.payload;
       return {current}

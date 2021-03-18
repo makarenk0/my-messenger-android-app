@@ -11,11 +11,18 @@ export const initDiffieHellman = () => (
     }
 );
 
-export const sendDataToServer = (packetType, packetPayload, callback) => (
+export const sendDataToServer = (packetType, disposable, packetPayload, callback) => (
     {
       type: 'SEND_RECEIVE_DATA',
-      payload: {'packetType': packetType, 'packetPayload': typeof packetPayload === 'string' ? packetPayload : JSON.stringify(packetPayload), 'callback': callback}
+      payload: {'packetType': packetType, 'disposable': disposable, 'packetPayload': typeof packetPayload === 'string' ? packetPayload : JSON.stringify(packetPayload), 'callback': callback}
     }
+);
+
+export const subscribeToUpdate = (packetType, callback) => (
+  {
+    type: 'SUBSCRIBE_FOR_SERVER_EVENTS',
+    payload: {'packetType': packetType, 'callback': callback}
+  }
 );
 
 export const setSessionToken = (token) => (
