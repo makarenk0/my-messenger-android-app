@@ -23,9 +23,9 @@ const ChatRepresenter = (props) => {
         underlayColor="#67daf9">
         <View style={styles.innerBox}>
           <Image style={styles.chatImage}></Image>
-          <Text style={styles.chatName}>Chat name</Text>
+          <Text style={styles.chatName}>{props.chatName}</Text>
           <View style={styles.newMessagesCounterBox}>
-            <Text style={styles.newMessagesCounterText}>10</Text>
+            {props.newMessagesNum == 0 ? null : <Text style={styles.newMessagesCounterText}>{props.newMessagesNum}</Text>}
           </View>
         </View>
       </TouchableHighlight>

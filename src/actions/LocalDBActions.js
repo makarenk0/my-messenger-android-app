@@ -12,7 +12,6 @@ export const saveDocToDB = (docToSave, callback) => (
     }
   );
 
-
   export const loadDocFromDB = (parametrsObj, callback) => (
     {
       type: 'LOAD_DOC',
@@ -27,10 +26,17 @@ export const saveDocToDB = (docToSave, callback) => (
     }
   );
 
-  export const addToArray = (parametrsObj, toAdd, callback) => (
+  export const addOneToArray = (parametrsObj, toAdd, callback) => (
     {
-      type: 'ADD_TO_ARRAY',
+      type: 'ADD_ONE_TO_ARRAY',
       payload: {'parametrsObj': parametrsObj, 'toAdd': toAdd, 'callback': callback}
+    }
+  );
+
+  export const addManyToArray = (parametrsObj, arrayField, toAdd, callback) => (
+    {
+      type: 'ADD_MANY_TO_ARRAY',
+      payload: {'parametrsObj': parametrsObj, 'arrayField': arrayField, 'toAdd': toAdd, 'callback': callback}
     }
   );
 
@@ -38,6 +44,20 @@ export const saveDocToDB = (docToSave, callback) => (
     {
       type: 'REMOVE_FROM_ARRAY',
       payload: {'parametrsObj': parametrsObj, 'toRemove': toRemove, 'callback': callback}
+    }
+  );
+
+  export const updateValue = (parametrsObj, toUpdate, callback) => (
+    {
+      type: 'UPDATE_VALUE',
+      payload: {'parametrsObj': parametrsObj, 'toUpdate': toUpdate, 'callback': callback}
+    }
+  );
+
+  export const getProjected = (parametrsObj, projection, callback) => (
+    {
+      type: 'GET_PROJECTED',
+      payload: {'parametrsObj': parametrsObj, 'projection': projection, 'callback': callback}
     }
   );
 

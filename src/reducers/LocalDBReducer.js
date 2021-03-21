@@ -31,22 +31,46 @@ const localDBReducer = (state = INITIAL_STATE, action) => {
         action.payload.callback,
       );
       return state;
-    case 'ADD_TO_ARRAY':
-        current.DB.update(
+    case 'ADD_ONE_TO_ARRAY':
+      current.DB.update(
         action.payload.parametrsObj,
         {$push: action.payload.toAdd},
         {},
         action.payload.callback,
       );
       return state;
+    case 'ADD_MANY_TO_ARRAY':
+      let toAdd = {};
+      toAdd[action.payload.arrayField] = {$each: action.payload.toAdd};
+
+      current.DB.update(
+        action.payload.parametrsObj,
+        {$push: toAdd},
+        {},
+        action.payload.callback,
+      );
+      return state;
     case 'REMOVE_FROM_ARRAY':
-        current.DB.update(
+      current.DB.update(
         action.payload.parametrsObj,
         {$pull: action.payload.toRemove},
         {},
         action.payload.callback,
       );
       return state;
+    case 'UPDATE_VALUE':
+      current.DB.update(
+        action.payload.parametrsObj,
+        {$set: action.payload.toUpdate},
+        {},
+        action.payload.callback,
+      );
+      return state;
+    case 'GET_PROJECTED':
+      let projectionProm = current.DB.find(action.payload.parametrsObj)
+        .projection(action.payload.projection)
+        .exec();
+      action.payload.callback(projectionProm);
     default:
       return state;
   }
