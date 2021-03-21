@@ -31,6 +31,7 @@ import {Provider} from 'react-redux';
 import {createStore} from 'redux';
 
 import connectionReducer from './src/reducers/ConnectionReducer';
+import localDBReducer from './src/reducers/LocalDBReducer';
 //import modalReducer from './src/reducers/ModalReducer';
 import MyTestTCP from './src/components/MyTestTCP.js';
 import Test2 from './src/components/Test2';
@@ -49,7 +50,7 @@ import {combineReducers} from 'redux';
 
 
 
-const store = createStore(combineReducers({connectionReducer, ModalReducer}))
+const store = createStore(combineReducers({connectionReducer, ModalReducer, localDBReducer}))
 
 const Stack = createStackNavigator();
 

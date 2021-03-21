@@ -1,0 +1,81 @@
+import React, {useState, useEffect} from 'react';
+import {
+  SafeAreaView,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  View,
+  Text,
+  TouchableOpacity,
+  TouchableHighlight,
+} from 'react-native';
+import {greaterThan} from 'react-native-reanimated';
+
+const ChatRepresenter = (props) => {
+  const chatPressed = () => {};
+
+  return (
+    <View style={styles.mainContainer}>
+      <TouchableHighlight
+        style={styles.touchZone}
+        onPress={chatPressed}
+        underlayColor="#67daf9">
+        <View style={styles.innerBox}>
+          <Image style={styles.chatImage}></Image>
+          <Text style={styles.chatName}>Chat name</Text>
+          <View style={styles.newMessagesCounterBox}>
+            <Text style={styles.newMessagesCounterText}>10</Text>
+          </View>
+        </View>
+      </TouchableHighlight>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  mainContainer: {
+    width: '100%',
+    height: 80,
+    borderColor: '#a9a9a9',
+    borderWidth: 1,
+  },
+  touchZone: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
+  },
+  chatName: {
+    fontWeight: 'bold',
+    marginLeft: 20,
+    marginTop: 5,
+    fontSize: 18,
+  },
+  innerBox: {
+    flexDirection: 'row',
+  },
+  chatImage: {
+    marginTop: 10,
+    marginBottom: 10,
+    marginLeft: 10,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#000',
+  },
+  newMessagesCounterBox: {
+    height: 22,
+    borderRadius: 10,
+    backgroundColor: '#67daf9',
+    position: 'absolute',
+    right: 20,
+    top: 25
+  },
+  newMessagesCounterText: {
+    paddingLeft: 5,
+    paddingRight: 5,
+    
+  },
+});
+
+export default ChatRepresenter;

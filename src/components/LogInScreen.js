@@ -13,17 +13,92 @@ import {
   Button,
   Alert,
 } from 'react-native';
-
+import CheckBox from '@react-native-community/checkbox';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {showModal, hideModal} from '../actions/ModalActions';
-import {connectToServer, initDiffieHellman, sendDataToServer, setSessionToken} from '../actions/ConnectionActions';
-import {LOCAL_SERVER_IP, SERVER_PORT, CONNECTING_TIMEOUT_MILLIS} from '../configs'
+import {
+  connectToServer,
+  initDiffieHellman,
+  sendDataToServer,
+  setSessionToken,
+} from '../actions/ConnectionActions';
+import {
+  LOCAL_SERVER_IP,
+  SERVER_PORT,
+  CONNECTING_TIMEOUT_MILLIS,
+} from '../configs';
 
 const LogInScreen = (props) => {
   //props.connectToServer('192.168.1.19', 20)
   const [errorText, setErrorText] = useState('');
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [rememberIsSelected, setRemember] = useState(false);
+  const [loginValue, setLoginValue] = React.useState('');
+  const [passwordValue, setPasswordValue] = React.useState('');
+
+  const autoLogin = () =>{
+    const getLoginData = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem('loginData')
+        return jsonValue != null ? JSON.parse(jsonValue) : null;
+      } catch (e) {
+        console.log(e)
+      }
+    }
+    getLoginData().then((data) =>{
+      if(data != null && data.remember){
+        logIntoAccount(data.login, data.password, data.remember)
+      }
+    })
+  }
+
+
+  const logIntoAccount = (login, password, rememberUser) =>{
+    setErrorText('');
+    let regObj = {
+      Login: login,
+      Password: password,
+    };
+    setLoading(true);
+
+    props.sendDataToServer(2, true, regObj, async(response) => {
+      setLoading(false);
+      if (response.Status == 'error') {
+        setErrorText(response.Details);
+      } else {
+        
+        
+        props.setSessionToken(response.SessionToken);
+        let saveLogPassObj
+        if(rememberUser){
+          saveLogPassObj = {
+            remember: true,
+            login: login,
+            password: password,
+          }
+        }
+        else{
+          saveLogPassObj = {
+            remember: false,
+          }
+        }
+
+        try {
+          const jsonValue = JSON.stringify(saveLogPassObj)
+          await AsyncStorage.setItem('loginData', jsonValue)
+        } catch (e) {
+          console.log(e)
+        }
+
+        props.navigation.navigate('Home');
+      }
+      //console.log(props.connectionReducer.connection.current.sessionToken)
+    });
+  }
+
+
 
   useEffect(() => {
     async function connect() {
@@ -45,13 +120,14 @@ const LogInScreen = (props) => {
           connected = true;
 
           //Diffie-Hellman right after establishing connection with server
-          props.initDiffieHellman()
-
+          props.initDiffieHellman((response) =>{
+            autoLogin()
+          });
         },
         () => {
           props.showModal('Error', {
             displayText: 'Server closed connection',
-          })
+          });
         },
       );
       props.showModal('Loading', {displayText: 'Connecting to server...'});
@@ -60,32 +136,11 @@ const LogInScreen = (props) => {
     connect();
   }, []);
 
-  const [loginValue, setLoginValue] = React.useState('');
-  const [passwordValue, setPasswordValue] = React.useState('');
+  
 
   const signInButtonPressed = () => {
-    setErrorText('')
-    let regObj = {
-      Login: loginValue,
-      Password: passwordValue,
-    };
-    setLoading(true)
+    logIntoAccount(loginValue, passwordValue, rememberIsSelected)
 
-    props.sendDataToServer(2, true ,regObj, (response) => {
-        setLoading(false)
-        if (response.Status == 'error') {
-          setErrorText(response.Details);
-        }
-        else{
-          
-          props.setSessionToken(response.SessionToken)
-          props.navigation.navigate('Home')
-        }
-        //console.log(props.connectionReducer.connection.current.sessionToken)
-      });
-    
-    
-    
     
     //props.hideModal();
     //props.connectToServer('192.168.1.19', 20);
@@ -99,7 +154,7 @@ const LogInScreen = (props) => {
 
   const signUpButtonPressed = () => {
     //props.showModal('Success', {displayText: 'Connecting to server...'});
-    props.navigation.navigate('Sign Up', { name: 'Jane' })
+    props.navigation.navigate('Sign Up', {name: 'Jane'});
   };
 
   return (
@@ -117,6 +172,15 @@ const LogInScreen = (props) => {
         value={passwordValue}
         onChangeText={(text) => setPasswordValue(text)}
         placeholder="Password"></TextInput>
+      <View style={styles.rememberMeBox}>
+        <CheckBox
+          value={rememberIsSelected}
+          onValueChange={setRemember}
+          style={styles.rememberMe}
+        />
+        <Text style={styles.rememberMeText}>Remember me</Text>
+      </View>
+
       <Text style={styles.inputErrorText}>{errorText}</Text>
       <TouchableOpacity
         style={styles.signInButton}
@@ -128,7 +192,7 @@ const LogInScreen = (props) => {
         onPress={signUpButtonPressed}>
         <Text style={{fontSize: 20}}>Sign up</Text>
       </TouchableOpacity>
-      <ActivityIndicator animating={loading} size="large" color="#67daf9"/>
+      <ActivityIndicator style={styles.loadIndicator} animating={loading} size="large" color="#67daf9" />
     </View>
   );
 };
@@ -155,7 +219,7 @@ const styles = StyleSheet.create({
   signInButton: {
     width: 200,
     height: 50,
-    marginTop: 50,
+    marginTop: 30,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -176,6 +240,23 @@ const styles = StyleSheet.create({
     color: '#a52a2a',
     marginTop: 20,
   },
+  rememberMeBox: {
+    marginTop: 20,
+    flexDirection: 'row',
+    height: 30,
+    width: 250,
+  },
+  rememberMeCheckBox: {
+    
+  },
+  rememberMeText:{
+    fontSize: 18,
+    paddingTop: 2,
+    paddingLeft: 6,
+  },
+  loadIndicator: {
+    marginTop: 15,
+  }
 });
 
 const mapStateToProps = (state) => {

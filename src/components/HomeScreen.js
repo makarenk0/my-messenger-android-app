@@ -4,14 +4,10 @@ import {
   Image,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   TextInput,
   View,
   Text,
-  StatusBar,
   TouchableOpacity,
-  Button,
-  Alert,
 } from 'react-native';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
@@ -21,122 +17,66 @@ import {
   sendDataToServer,
   subscribeToUpdate,
 } from '../actions/ConnectionActions';
-import {ForceTouchGestureHandler} from 'react-native-gesture-handler';
+import {loadDB, saveDocToDB, loadDocFromDB, removeDocFromDB, addToArray, removeFromArray} from '../actions/LocalDBActions'
+
+import ChatRepresenter from './ChatRepresenter';
 
 const HomeScreen = (props) => {
-  const [timer, setTimer] = useState(null);
-  const [counter, setCounter] = useState(0);
-
-  const [toSend, setSendMessage] = useState('');
-  const [allMessages, setAllMessages] = useState([])
-
-  const sendMessage = () =>{
-    let sendObj = {
-      SessionToken: props.connectionReducer.connection.current.sessionToken,
-      ChatId: '6052553af34ec222c2c36a57',
-      Body: toSend
-    };
-    props.sendDataToServer(4, true, sendObj, (response) =>{
-      console.log(response)
-      
-    })
-  }
-
   useEffect(() =>{
-    let regObj = {
-      SessionToken: props.connectionReducer.connection.current.sessionToken,
-      SubscriptionPacketNumber: '5',
-      LastChatsMessages: [
-        {
-          ChatId: '6052553af34ec222c2c36a57',
-          LastMessageId: '60528fbde61d9cbb373c1b07',
-        },
-      ],
-    };
-    props.sendDataToServer(7, true, regObj, (response) => {
-      if (response.Status == 'error') {
-        console.log(response);
-      } else {
-        console.log(response);
-      }
-    });
+    props.loadDB('localDB')
+
+    // props.saveDocToDB({type: 'localChatsIds', chatIds: ["6052553af34ec222c2c36a57"]}, (err, newDoc) =>{
+    //   console.log(newDoc)
+    // })
+    // props.removeDocFromDB({type: 'localChatsIds'}, true, (err, numberOfRemoved) =>{
+    //   console.log(numberOfRemoved)
+    // })
+
+  //   props.addToArray({type: 'localChatsIds'}, {chatIds: "605210b6ca1a7d4c922dd7c5"}, (err, docs) =>{
+  //     console.log(docs)
+  // })
+
+  // props.removeFromArray({type: 'localChatsIds'}, {chatIds: "605210b6ca1a7d4c922dd7c5"}, (err, docs) =>{
+  //       console.log(docs)
+  //   })
+
+    props.loadDocFromDB({type: 'localChatsIds'}, (err, docs) =>{
+        console.log(docs)
+    })
+
+    
+
   }, [])
 
 
-  useEffect(() => {
-    console.log("subscribe once")
-    props.subscribeToUpdate(5, (data) => {
-      let newData = data.NewMessages
-      setAllMessages(oldData => [...oldData, ...newData])
-    });
-  }, []);
-
-  useEffect(() => {
-    console.log("All messages changed!!!!!!!!!!!")
-    console.log(allMessages)
-  }, [allMessages])
-  // const tick = () =>{
-  //   console.log(counter)
-  //   props.sendDataToServer(3, {"some": "something"}, (response) => {
-  //     console.log(response)
-  //   });
-  // }
-
-  // useEffect(() => {
-  //   let timerFunc = setInterval(tick, 200);
-  //   setTimer(timerFunc)
-  //   return () => {clearInterval(timerFunc)}
-  // }, [])
-
   return (
     <View>
-      
-      <TextInput
-        style={styles.inputStyle}
-        value={toSend}
-        onChangeText={(text) => setSendMessage(text)}
-        placeholder="Message"></TextInput>
-      <TouchableOpacity
-        style={styles.signUpButton}
-        onPress={sendMessage}>
-        <Text style={{fontSize: 20}}>Send</Text>
-      </TouchableOpacity>
-      <ScrollView>{allMessages.map(x => (<Text key={x._id}>{x.Body}</Text>))}</ScrollView>
+      <ScrollView>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+        <ChatRepresenter></ChatRepresenter>
+      </ScrollView>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  texts: {
-    marginTop: 350,
-  },
-  inputStyle: {
-    height: 50,
-    width: 250,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingLeft: 20,
-    borderColor: '#67daf9',
-    marginTop: 30,
-  },
-  signUpButton: {
-    width: 200,
-    height: 50,
-    marginTop: 20,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#67daf9',
-  },
-});
+const styles = StyleSheet.create({});
 
 const mapStateToProps = (state) => {
-  const {connectionReducer, ModalReducer} = state;
+  const {connectionReducer, ModalReducer, localDBReducer} = state;
   return {
     ModalReducer,
     connectionReducer,
+    localDBReducer
   };
 };
 
@@ -148,6 +88,12 @@ const mapDispatchToProps = (dispatch) =>
       connectToServer,
       sendDataToServer,
       subscribeToUpdate,
+      loadDB,
+      saveDocToDB,
+      loadDocFromDB,
+      removeDocFromDB,
+      addToArray,
+      removeFromArray
     },
     dispatch,
   );

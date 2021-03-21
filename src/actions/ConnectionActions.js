@@ -5,9 +5,10 @@ export const connectToServer = (ipAddress, portNumber, onSuccessfullConnect, onS
     }
   );
 
-export const initDiffieHellman = () => (
+export const initDiffieHellman = (callback) => (
     {
-      type: 'DIFFIE_HELLMAN'
+      type: 'DIFFIE_HELLMAN',
+      payload: {'callback': callback}
     }
 );
 

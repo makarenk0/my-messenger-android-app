@@ -63,6 +63,7 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
               EncryptionModule.generateDerivedKey(dataJSON.Public_key, KEY_DERIVATION_ITERATIONS_NUMBER, AES_KEY_LENGTH, (derivedKey) => {
                 console.log("Derived key:")
                 console.log(derivedKey)
+                action.payload.callback("Diffie hellman established")
               })}
             })
         })
