@@ -41,6 +41,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import LogInScreen from './src/components/LogInScreen';
 import SignUpScreen from './src/components/SignUpScreen';
 import HomeScreen from './src/components/HomeScreen';
+import ChatScreen from './src/components/ChatScreen';
 import RootModal from './src/components/Modals/RootModal'
 
 
@@ -75,6 +76,7 @@ export default function App() {
             {/* <MyTestTCP></MyTestTCP> */}
             <Stack.Screen name="Sign Up" component={SignUpScreen} />
             <Stack.Screen name="Home" component={HomeScreen} options={{headerShown: false}}/>
+            <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerShown: false}}/>
           </Stack.Navigator>
         </NavigationContainer>
         <RootModal />

@@ -19,10 +19,17 @@ export const sendDataToServer = (packetType, disposable, packetPayload, callback
     }
 );
 
-export const subscribeToUpdate = (packetType, callback) => (
+export const subscribeToUpdate = (packetType, id, callback) => (
   {
     type: 'SUBSCRIBE_FOR_SERVER_EVENTS',
-    payload: {'packetType': packetType, 'callback': callback}
+    payload: {'packetType': packetType, "id": id, 'callback': callback}
+  }
+);
+
+export const unsubscribeFromUpdate = (id, callback) => (
+  {
+    type: 'UNSUBSCRIBE_FROM_SERVER_EVENTS',
+    payload: {"id": id, 'callback': callback}
   }
 );
 
