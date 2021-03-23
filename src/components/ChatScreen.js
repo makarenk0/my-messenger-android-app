@@ -1,5 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {NavigationEvents} from '@react-navigation/native';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
 import {
   StyleSheet,
   ScrollView,
@@ -18,6 +20,16 @@ import {
   unsubscribeFromUpdate,
 } from '../actions/ConnectionActions';
 
+import {
+  loadDocFromDB,
+  removeDocFromDB,
+  addOneToArray,
+  addManyToArray,
+  removeFromArray,
+  getProjected,
+  updateValue,
+} from '../actions/LocalDBActions';
+
 const ChatScreen = (props) => {
   const chatId = props.route.params.chatId;
   const [toSend, setSendMessage] = useState('');
@@ -27,103 +39,117 @@ const ChatScreen = (props) => {
     let sendObj = {
       SessionToken: props.connectionReducer.connection.current.sessionToken,
       ChatId: chatId,
-      Body: toSend
+      Body: toSend,
     };
-    props.sendDataToServer(4, true, sendObj, (response) =>{
-      console.log(response)
-    })
+    props.sendDataToServer(4, true, sendObj, (response) => {
+      console.log(response);
+      setAllMessages([...allMessages, response])
+      setSendMessage('');
+    });
   };
 
-  // useEffect(() =>{
-  //   let regObj = {
-  //     SessionToken: props.connectionReducer.connection.current.sessionToken,
-  //     SubscriptionPacketNumber: '5',
-  //     LastChatsMessages: [
-  //       {
-  //         ChatId: '6052553af34ec222c2c36a57',
-  //         LastMessageId: '60528fbde61d9cbb373c1b07',
-  //       },
-  //     ],
-  //   };
-  //   props.sendDataToServer(7, true, regObj, (response) => {
-  //     if (response.Status == 'error') {
-  //       console.log(response);
-  //     } else {
-  //       console.log(response);
-  //     }
-  //   });
-  // }, [])
+  //getting chat data
+  useEffect(() => {
+    props.loadDocFromDB({_id: chatId}, (err, docs) =>{
+        let chat = docs[0]
+        
+        setAllMessages(chat.Messages)
+    })
+  }, []);
 
   useEffect(() => {
     console.log();
-    props.subscribeToUpdate(5, "chatscreen", (data) => {
-      if(data.ChatId == chatId){
-        console.log(data)
+    props.subscribeToUpdate(5, 'chatscreen', (data) => {
+      if (data.ChatId == chatId) {
+        let newMessages = data.NewMessages.filter(x => x.Sender != props.connectionReducer.connection.current.myId)
+        setAllMessages([...allMessages, ...newMessages])
       }
     });
-  }, []);
+  }, [allMessages]);
 
   // useEffect(() => {
   //   console.log("All messages changed!!!!!!!!!!!")
   //   console.log(allMessages)
   // }, [allMessages])
 
-
   // action when leave screen
   useEffect(() => {
     const unsubscribe = props.navigation.addListener('beforeRemove', () => {
-      props.unsubscribeFromUpdate("chatscreen", (removed) =>{
-        console.log("Subscription removed:")
-        console.log(removed)
-      })
+      props.unsubscribeFromUpdate('chatscreen', (removed) => {
+        console.log('Subscription removed:');
+        console.log(removed);
+      });
     });
 
     return unsubscribe;
   }, [props.navigation]);
 
   return (
-    <View>
-      <TextInput
-        style={styles.inputStyle}
-        value={toSend}
-        onChangeText={(text) => setSendMessage(text)}
-        placeholder="Message"></TextInput>
-      <TouchableOpacity style={styles.signUpButton} onPress={sendMessage}>
-        <Text style={{fontSize: 20}}>Send</Text>
-      </TouchableOpacity>
-      <ScrollView>
-        {allMessages.map((x) => (
-          <Text key={x._id}>{x.Body}</Text>
-        ))}
-      </ScrollView>
+    <View style={styles.mainContainer}>
+      <View style={styles.messagesWindow}>
+        <ScrollView style={styles.messageThread}>
+          {allMessages.map((x) => (
+            <Text key={x._id}>{x.Body}</Text>
+          ))}
+        </ScrollView>
+      </View>
+      <View style={styles.sendMessageBox}>
+        <TextInput
+          style={styles.inputStyle}
+          value={toSend}
+          onChangeText={(text) => setSendMessage(text)}
+          placeholder="Message"></TextInput>
+        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+          <FontAwesomeIcon
+            icon={faPaperPlane}
+            size={28}
+            style={styles.sendIcon}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  texts: {
-    marginTop: 350,
+  mainContainer: {
+    flex: 1,
+  },
+  messagesWindow: {
+    flex: 1,
+  },
+  sendMessageBox: {
+    flexDirection: 'row',
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 10,
+  },
+
+  messageThread: {
+    width: '100%',
+    height: '100%',
   },
   inputStyle: {
-    height: 50,
-    width: 250,
+    height: 55,
+    flex: 1,
     borderWidth: 1,
     borderRadius: 20,
     paddingLeft: 20,
+    fontSize: 20,
     borderColor: '#67daf9',
-    marginTop: 30,
   },
-  signUpButton: {
-    width: 200,
-    height: 50,
-    marginTop: 20,
+  sendButton: {
+    height: 55,
+    width: 55,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#67daf9',
+    marginLeft: 10,
   },
+  sendIcon: {},
 });
 
 const mapStateToProps = (state) => {
@@ -143,6 +169,13 @@ const mapDispatchToProps = (dispatch) =>
       sendDataToServer,
       subscribeToUpdate,
       unsubscribeFromUpdate,
+      loadDocFromDB,
+      removeDocFromDB,
+      addOneToArray,
+      addManyToArray,
+      removeFromArray,
+      getProjected,
+      updateValue,
     },
     dispatch,
   );

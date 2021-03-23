@@ -34,20 +34,132 @@ import ChatRepresenter from './ChatRepresenter';
 const HomeScreen = (props) => {
   const [allChats, setAllChats] = useState([]);
 
+  const addNewChatToDB = (chat) => {
+    let newMessages = chat.NewMessages;
+    props.saveDocToDB(
+      {
+        _id: chat.ChatId,
+        ChatName: chat.ChatName,
+        Members: chat.Members,
+        Messages: chat.NewMessages,
+        LastMessageId: newMessages[newMessages.length - 1]._id,
+      },
+      (err, newDoc) => {
+        console.log('New chat in DB');
+        //updating array with existing chats ids
+        props.addOneToArray(
+          {Type: 'localChatsIds'},
+          {ChatIds: chat.ChatId},
+          (err, docs) => {
+            console.log(err);
+            console.log(docs);
+          },
+        );
+      },
+    );
+  };
 
+  const updateExistingChatInDB = (chat) => {
+    let newMessages = chat.NewMessages;
+    //adding all new messages to messages array
+    props.addManyToArray({_id: chat.ChatId}, 'Messages', newMessages);
+    //updating "LastMessageId" field
+    props.updateValue(
+      {_id: chat.ChatId},
+      {LastMessageId: newMessages[newMessages.length - 1]._id},
+    );
+  };
 
+  const updateAllChatsToDisplay = (local, updated) => {
+    // updating "allChats" array which is used to display chats
+    // increasing new messages counter
+    local = local.map((x) => {
+      let update = updated.find((y) => y.chatId == x.chatId);
+      if (typeof update !== 'undefined') {
+        //update counter only in case there is an update
+        x.newMessagesNum = update.newMessagesNum;
+      }
+      return x;
+    });
+
+    //adding new chats
+    let newChats = updated.filter((x) => x.isNew);
+    local.unshift(...newChats);
+
+    //applying changes
+    console.log('Changing all chats data to display');
+    console.log(local);
+    setAllChats(local);
+  };
 
   useEffect(() => {
-      console.log("subscribe once")
-      props.subscribeToUpdate(5, "homescreen", (data) => {
-        console.log(data)
-        let newData = data.NewMessages
-        setAllMessages(oldData => [...oldData, ...newData])
+    props.subscribeToUpdate(5, 'homescreen', (data) => {
+      console.log(data);
+      if (data.IsNew) {
+        console.log('Adding new chat in real-time');
+        addNewChatToDB(data);
+      } else {
+        console.log('Updating existing chat in real-time');
+        updateExistingChatInDB(data);
+      }
+      let ChatRepresentorsUpdatedData = [];
+      ChatRepresentorsUpdatedData.push({
+        chatId: data.ChatId,
+        chatName: data.ChatName,
+        chatMembers: data.Members,
+        isNew: data.IsNew,
+        newMessagesNum: data.NewMessages.length,
       });
-    }, []);
+      updateAllChatsToDisplay(allChats, ChatRepresentorsUpdatedData);
+    });
+  }, [allChats]);
 
+  const zeroPacketResquest = (LastChatsMessages, ChatRepresentorsLocalData) => {
 
+    let ChatRepresentorsUpdatedData = []; // this array will be a response data for "LastChatsMessages" array
 
+    let regObj = {
+      SessionToken: props.connectionReducer.connection.current.sessionToken,
+      SubscriptionPacketNumber: '5', //packet number which server will use for real-time update
+      LastChatsMessages: LastChatsMessages,
+    };
+
+    //after "LastChatsMessages" array formed - send it to server and subscribe for real-time update on packet number 5
+    props.sendDataToServer(7, true, regObj, (response) => {
+      
+      if (response.Status == 'error') {
+        //in case of some error
+        console.log(response.Details);
+      } else {
+        //in case of success
+      
+        // going through server response array of new messages and new chats(if there are such)
+        response.AllChats.forEach((element) => {
+          if (element.IsNew) {
+            addNewChatToDB(element); //adding new chat to database
+          } else {
+            updateExistingChatInDB(element); //update existing chat in DB
+          }
+          // --------------------------
+
+          // pushing new data to "ChatRepresentorsUpdatedData" array
+          ChatRepresentorsUpdatedData.push({
+            chatId: element.ChatId,
+            chatName: element.ChatName,
+            chatMembers: element.Members,
+            isNew: element.IsNew,
+            newMessagesNum: element.NewMessages.length,
+          });
+          // -----------------------
+        });
+      }
+
+      updateAllChatsToDisplay(
+        ChatRepresentorsLocalData,
+        ChatRepresentorsUpdatedData,
+      );
+    });
+  };
 
   useEffect(() => {
     props.loadDB('localDB');
@@ -90,125 +202,63 @@ const HomeScreen = (props) => {
     //   console.log(docs[0])
     // })
 
-    
-
-    
     props.loadDocFromDB({Type: 'localChatsIds'}, (err, docs) => {
-      var LastChatsMessages = [];  //this array will be send to server and server will determine which new messages do you need (or new chats)
-      var ChatRepresentorsLocalData = [];  // this array is formed with data of chats which are stored locally
-      var ChatRepresentorsUpdatedData = [];  // this array will be a response data for "LastChatsMessages" array
-      let allPreojectionPromises = [];  // as access to local db is async, each request for chat return promise, so to get all chats and then do something we should wait for all promises
-
-      docs[0].ChatIds.forEach((chatId) => {
-        console.log(chatId);
-
-        //we need only projections (Only "LastMessageId" field, "ChatName" field and "Members" field )
-        props.getProjected(
-          {_id: chatId},
-          {LastMessageId: 1, ChatName: 1, Members: 1},
-          (promise) => {
-            promise.then((lastMessageId) => {
-             
-              //pushing data from db to array
-              ChatRepresentorsLocalData.push({
-                chatId: chatId,
-                chatName: lastMessageId[0].ChatName,
-                chatMembers: lastMessageId[0].Members,
-                newMessagesNum: 0,  //TO DO: create a field of number of new messages in db
-              });
-              //pushing "ChatId" and "LastMessageId" to array which will be send to server
-              LastChatsMessages.push({
-                ChatId: chatId,
-                LastMessageId: lastMessageId[0].LastMessageId,
-              });
-            });
-            allPreojectionPromises.push(promise);  //pushing all promises to array
+      if (docs.length == 0) {
+        props.saveDocToDB(
+          {Type: 'localChatsIds', ChatIds: []},
+          (err, newDoc) => {
+            console.log('Local chats initialized');
+            zeroPacketResquest([], []);
           },
         );
-        //--------------------------------------------------------------------------------------------
-      });
-
-      // waiting for all requests are completed on database
-      Promise.all(allPreojectionPromises).then((res) => {
-        
-        let regObj = {
-          SessionToken: props.connectionReducer.connection.current.sessionToken,
-          SubscriptionPacketNumber: '5', //packet number which server will use for real-time update
-          LastChatsMessages: LastChatsMessages,
-        };
-        
-        //after "LastChatsMessages" array formed - send it to server and subscribe for real-time update on packet number 5
-        props.sendDataToServer(7, true, regObj, (response) => {
+      } else {
+        if (docs[0].ChatIds.length == 0) {
+          zeroPacketResquest([], []);
+        } else {
+          let LastChatsMessages = []; //this array will be send to server and server will determine which new messages do you need (or new chats)
+          var ChatRepresentorsLocalData = []; // this array is formed with data of chats which are stored locally
           
-          if (response.Status == 'error') {  //in case of some error
-            console.log(response.Details);
-          } else { //in case of success
+          let allPreojectionPromises = []; // as access to local db is async, each request for chat return promise, so to get all chats and then do something we should wait for all promises
+          docs[0].ChatIds.forEach((chatId) => {
+            console.log(chatId);
 
-            // going through server response array of new messages and new chats(if there are such)
-            response.AllChats.forEach((element) => {
-              let newMessages = element.NewMessages;
-              console.log(newMessages)
-              // adding new chat to database
-              if (element.ChatName != null) {  //TO DO: add special boolean field which shows that this chat is new
-                props.saveDocToDB({_id: element.ChatId, ChatName: element.ChatName, Members: element.Members, Messages: element.NewMessages, LastMessageId: newMessages.length > 0 ? newMessages[newMessages.length - 1]._id : null}, (err, newDoc) =>{
-                  console.log("New chat in DB")
-                  //updating array with existing chats ids
-                  props.addOneToArray({Type: 'localChatsIds'}, {ChatIds: element.ChatId}, (err, docs) =>{
-                    console.log(err)  
-                    console.log(docs)
-                  })
-
-                })
-              } else { //update existing chat in DB 
-                //adding all new messages to messages array
-                props.addManyToArray(
-                  {_id: element.ChatId},
-                  'Messages',
-                  newMessages,
-                );
-                //updating "LastMessageId" field
-                props.updateValue(
-                  {_id: element.ChatId},
-                  {LastMessageId: newMessages[newMessages.length - 1]._id},
-                );
-              }
-              // --------------------------
-
-              // pushing new data to "ChatRepresentorsUpdatedData" array
-              ChatRepresentorsUpdatedData.push({chatId: element.ChatId, chatName: element.ChatName, chatMembers: element.Members, newMessagesNum: element.NewMessages.length})
-              // -----------------------
-            });
-          }
-
-          // updating "allChats" array which is used to display chats
-          // increasing new messages counter
-          ChatRepresentorsLocalData.map(x => {
-            let update = ChatRepresentorsUpdatedData.find(y => y.chatId == x.chatId)
-            if(typeof update !== "undefined"){  //update counter only in case there is an update
-              x.newMessagesNum = update.newMessagesNum
-            }
-            return x
-          })
-
-          //adding new chats
-          let newChats = ChatRepresentorsUpdatedData.filter(x => (typeof ChatRepresentorsLocalData.find(y => y.chatId == x.chatId)) === "undefined")
-          ChatRepresentorsLocalData.unshift(...newChats)
-          
-          //applying changes
-          setAllChats(ChatRepresentorsLocalData)
-          // --------------------------------------------------------
-
-        });
-      });
-    }); 
+            //we need only projections (Only "LastMessageId" field, "ChatName" field and "Members" field )
+            props.getProjected(
+              {_id: chatId},
+              {LastMessageId: 1, ChatName: 1, Members: 1},
+              (promise) => {
+                promise.then((lastMessageId) => {
+                  //pushing data from db to array
+                  ChatRepresentorsLocalData.push({
+                    chatId: chatId,
+                    chatName: lastMessageId[0].ChatName,
+                    chatMembers: lastMessageId[0].Members,
+                    newMessagesNum: 0, //TO DO: create a field of number of new messages in db
+                  });
+                  //pushing "ChatId" and "LastMessageId" to array which will be send to server
+                  LastChatsMessages.push({
+                    ChatId: chatId,
+                    LastMessageId: lastMessageId[0].LastMessageId,
+                  });
+                });
+                allPreojectionPromises.push(promise); //pushing all promises to array
+              },
+            );
+            //--------------------------------------------------------------------------------------------
+          });
+          // waiting for all requests are completed on database
+          Promise.all(allPreojectionPromises).then((res) => {
+            zeroPacketResquest(LastChatsMessages, ChatRepresentorsLocalData);
+          });
+        }
+      }
+    });
   }, []);
 
-
   // in case of chat is pressed (navigating to "ChatScreen" and passing chatId )
-  const chatPressed = (chatId) =>{
-    console.log(chatId)
-    props.navigation.navigate("ChatScreen", {chatId: chatId})
-  }
+  const chatPressed = (chatId) => {
+    props.navigation.navigate('ChatScreen', {chatId: chatId});
+  };
 
   return (
     <View>

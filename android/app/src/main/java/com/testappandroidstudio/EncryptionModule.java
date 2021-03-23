@@ -122,14 +122,14 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
             if(data.charAt(i) == _magicSequence){
                 String fullPacket = _networkBuffer.toString();
                 _networkBuffer = new StringBuilder();
-                byte[] payload;// packetType are also encrypted
+                byte[] payload;
                 if(fullPacket.charAt(0) == '0'){  // 0 means not encrypted messages when we exchange public keys
                     payload = Base64.getDecoder().decode(fullPacket.substring(1));
                 }
                 else{
                     payload = decryptAES256(fullPacket.substring(1));
                 }
-                results.add(new String(payload));
+                results.add(String.valueOf(fullPacket.charAt(0)) + new String(payload));  //packet type + encrypted payload
             }
             else{
                 _networkBuffer.append(data.charAt(i));
