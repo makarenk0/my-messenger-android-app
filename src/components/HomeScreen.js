@@ -256,8 +256,8 @@ const HomeScreen = (props) => {
   }, []);
 
   // in case of chat is pressed (navigating to "ChatScreen" and passing chatId )
-  const chatPressed = (chatId) => {
-    props.navigation.navigate('ChatScreen', {chatId: chatId});
+  const chatPressed = (chatId, chatName) => {
+    props.navigation.navigate('ChatScreen', {chatId: chatId, chatName: chatName});
   };
 
   return (

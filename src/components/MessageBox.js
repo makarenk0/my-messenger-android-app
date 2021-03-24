@@ -6,7 +6,7 @@ const MessageBox = (props) => {
     <View style={{alignItems: props.isMine ? 'flex-end' : 'flex-start'}}>
       <View
         style={{
-          backgroundColor: props.isMine ? '#00BCD4' : '#1976D2',
+          backgroundColor: props.isMine ? '#00BCD4' : '#03a9f4',
           padding: 10,
           borderRadius: 5,
           marginTop: 10,

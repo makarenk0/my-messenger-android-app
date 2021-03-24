@@ -14,7 +14,7 @@ import {greaterThan} from 'react-native-reanimated';
 
 const ChatRepresenter = (props) => {
   const chatPressed = () => {
-    props.onPress(props.chatId);
+    props.onPress(props.chatId, props.chatName);
   };
 
   return (

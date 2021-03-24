@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
   Text,
+  Image,
   TouchableOpacity,
 } from 'react-native';
 import {connect} from 'react-redux';
@@ -37,17 +38,23 @@ const ChatScreen = (props) => {
   const [allMessages, setAllMessages] = useState([]);
 
   const sendMessage = () => {
-    let sendObj = {
-      SessionToken: props.connectionReducer.connection.current.sessionToken,
-      ChatId: chatId,
-      Body: toSend,
-    };
-    props.sendDataToServer(4, true, sendObj, (response) => {
-      console.log(response);
-      setAllMessages([...allMessages, response])
-      setSendMessage('');
-    });
+    if(!isEmptyOrSpaces(toSend)){
+      let sendObj = {
+        SessionToken: props.connectionReducer.connection.current.sessionToken,
+        ChatId: chatId,
+        Body: toSend,
+      };
+      props.sendDataToServer(4, true, sendObj, (response) => {
+        console.log(response);
+        setAllMessages([...allMessages, response])
+        setSendMessage('');
+      });
+    }
   };
+
+  const isEmptyOrSpaces = (str) =>{
+    return str === null || str.match(/^ *$/) !== null;
+  }
 
   //getting chat data
   useEffect(() => {
@@ -93,6 +100,10 @@ const ChatScreen = (props) => {
 
   return (
     <View style={styles.mainContainer}>
+      <View style={styles.chatHeader}>
+        <Image style={styles.chatImage}></Image>
+        <Text style={styles.chatName}>{props.route.params.chatName}</Text>
+      </View>
       <View style={styles.messagesWindow}>
         <ScrollView style={styles.messageThread}>
           {allMessages.map((x) => (
@@ -123,8 +134,18 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
+  chatHeader: {
+    height: 65,
+    backgroundColor: "#3F51B5",
+    flexDirection: "row",
+  },
   messagesWindow: {
     flex: 1,
+  },
+  chatName: {
+    marginLeft: 20,
+    fontSize: 20,
+    textAlignVertical: "center",
   },
   sendMessageBox: {
     flexDirection: 'row',
@@ -133,7 +154,15 @@ const styles = StyleSheet.create({
     paddingRight: 10,
     paddingBottom: 10,
   },
-
+  chatImage: {
+    marginTop: 8,
+    marginBottom: 10,
+    marginLeft: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#000',
+  },
   messageThread: {
     width: '100%',
     height: '100%',
