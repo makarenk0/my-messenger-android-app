@@ -29,6 +29,7 @@ import {
   getProjected,
   updateValue,
 } from '../actions/LocalDBActions';
+import MessageBox from './MessageBox';
 
 const ChatScreen = (props) => {
   const chatId = props.route.params.chatId;
@@ -84,12 +85,19 @@ const ChatScreen = (props) => {
     return unsubscribe;
   }, [props.navigation]);
 
+  const decapsulateDateFromId = (id) =>{
+    let decapsulatedDate = parseInt(id.substring(0, 8), 16) * 1000
+    let date = new Date(decapsulatedDate)
+    return date
+  }
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.messagesWindow}>
         <ScrollView style={styles.messageThread}>
           {allMessages.map((x) => (
-            <Text key={x._id}>{x.Body}</Text>
+            <MessageBox key={x._id} body={x.Body} isMine={props.connectionReducer.connection.current.myId == x.Sender} timestamp={decapsulateDateFromId(x._id)}></MessageBox>
+            // <Text key={x._id}>{x.Body}</Text>
           ))}
         </ScrollView>
       </View>
@@ -120,6 +128,7 @@ const styles = StyleSheet.create({
   },
   sendMessageBox: {
     flexDirection: 'row',
+    paddingTop: 10,
     paddingLeft: 10,
     paddingRight: 10,
     paddingBottom: 10,
