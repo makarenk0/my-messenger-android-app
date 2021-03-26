@@ -63,7 +63,7 @@ const ChatScreen = (props) => {
     props.loadDocFromDB({_id: chatId}, (err, docs) =>{
         let chat = docs[0]
         
-        setAllMessages(chat.Messages)
+        setAllMessages(chat.Messages.reverse())
     })
   }, []);
 
@@ -72,7 +72,7 @@ const ChatScreen = (props) => {
     props.subscribeToUpdate(5, 'chatscreen', (data) => {
       if (data.ChatId == chatId) {
         let newMessages = data.NewMessages.filter(x => x.Sender != props.connectionReducer.connection.current.myId)
-        setAllMessages([...allMessages, ...newMessages])
+        setAllMessages([...newMessages, ...allMessages])
       }
     });
   }, [allMessages]);
@@ -106,6 +106,13 @@ const ChatScreen = (props) => {
     )
   }
 
+  const ChatThreadSeparator = (item) =>{
+    console.log(item)
+    return(
+      <Text>Hello separator</Text>
+    )
+  }
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.chatHeader}>
@@ -114,10 +121,12 @@ const ChatScreen = (props) => {
       </View>
       <View style={styles.messagesWindow}>
         <FlatList style={styles.messageThread}
-        ref={ref => {scrollView = ref}}
-        onContentSizeChange={() => scrollView.scrollToEnd({animated: true})}
+        // ref={ref => {scrollView = ref}}
+        // onContentSizeChange={() => scrollView.scrollToEnd({animated: true})}
+        inverted
         data={allMessages}
         renderItem={renderItem}
+        ItemSeparatorComponent = { ChatThreadSeparator }
         keyExtractor={(item) => item._id}>
           {/* {allMessages.map((x) => (
             <MessageBox key={x._id} body={x.Body} isMine={props.connectionReducer.connection.current.myId == x.Sender} timestamp={decapsulateDateFromId(x._id)}></MessageBox>
