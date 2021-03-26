@@ -13,6 +13,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.Arguments;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,9 +111,11 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
     @ReactMethod//(isBlockingSynchronousMethod = true)
     private void disassemblePacketFromReact(String data, Callback callback){
         ArrayList<String> res = disassemblePacket(data);
-        for(String str : res){
-            callback.invoke(str);
+        WritableArray resArr = Arguments.createArray();
+        for (String x : res) {
+            resArr.pushString(x);
         }
+        callback.invoke(resArr);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

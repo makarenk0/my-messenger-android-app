@@ -62,6 +62,7 @@ const HomeScreen = (props) => {
   const updateExistingChatInDB = (chat) => {
     let newMessages = chat.NewMessages;
     //adding all new messages to messages array
+    console.log("adding all new messages to messages array")
     props.addManyToArray({_id: chat.ChatId}, 'Messages', newMessages);
     //updating "LastMessageId" field
     props.updateValue(
@@ -95,6 +96,7 @@ const HomeScreen = (props) => {
   useEffect(() => {
     props.subscribeToUpdate(5, 'homescreen', (data) => {
       console.log(data);
+      console.log(data.IsNew);
       if (data.IsNew) {
         console.log('Adding new chat in real-time');
         addNewChatToDB(data);

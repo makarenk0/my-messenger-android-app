@@ -39,23 +39,29 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
           result += String.fromCharCode(parseInt(data[i]));
         }
         EncryptionModule.disassemblePacketFromReact(result, (disassembled) => {
-          let onReceive = onReceiveCallbacks.filter(
-            (x) => x.type == disassembled.charAt(0),
-          );
+         
 
-          onReceive.forEach((el) => {
-            if (el.disposable) {
-              // if disposable use callback once and then remove object from callbacks array
-              let index = onReceiveCallbacks.findIndex(
-                (x) => x.type == result.charAt(0),
-              );
-              onReceiveCallbacks.splice(index, 1);
-              console.log('Callback with type ' + el.type + ' was disposed');
-            }
-            let getObj = JSON.parse(disassembled.slice(1));
-            
-            el.callback(getObj);
-          });
+          disassembled.forEach((packetWithType) =>{
+            let onReceive = onReceiveCallbacks.filter(
+              (x) => x.type == packetWithType.charAt(0),
+            );
+            onReceive.forEach((el) => {
+              if (el.disposable) {
+                // if disposable use callback once and then remove object from callbacks array
+                let index = onReceiveCallbacks.findIndex(
+                  (x) => x.type == result.charAt(0),
+                );
+                onReceiveCallbacks.splice(index, 1);
+                console.log('Callback with type ' + el.type + ' was disposed');
+              }
+              let getObj = JSON.parse(packetWithType.slice(1));
+              el.callback(getObj);
+            });
+          })
+          
+
+
+
         });
       });
 

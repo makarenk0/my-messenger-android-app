@@ -37,10 +37,11 @@ const ChatScreen = (props) => {
   const chatId = props.route.params.chatId;
   const [toSend, setSendMessage] = useState('');
   const [allMessages, setAllMessages] = useState([]);
+  const [reRenderFlag, setRerenderFlag] = useState(true);
 
-
-  const sendMessage = () => {
+  const sendMessage = async() => { 
     if(!isEmptyOrSpaces(toSend)){
+      setSendMessage('');
       let sendObj = {
         SessionToken: props.connectionReducer.connection.current.sessionToken,
         ChatId: chatId,
@@ -48,8 +49,9 @@ const ChatScreen = (props) => {
       };
       props.sendDataToServer(4, true, sendObj, (response) => {
         console.log(response);
-        setAllMessages([...allMessages, response])
-        setSendMessage('');
+        // setAllMessages([response, ...allMessages])
+        // setRerenderFlag(!reRenderFlag)
+        
       });
     }
   };
@@ -71,8 +73,9 @@ const ChatScreen = (props) => {
     console.log();
     props.subscribeToUpdate(5, 'chatscreen', (data) => {
       if (data.ChatId == chatId) {
-        let newMessages = data.NewMessages.filter(x => x.Sender != props.connectionReducer.connection.current.myId)
+        let newMessages = data.NewMessages
         setAllMessages([...newMessages, ...allMessages])
+        setRerenderFlag(!reRenderFlag)
       }
     });
   }, [allMessages]);
@@ -107,9 +110,30 @@ const ChatScreen = (props) => {
   }
 
   const ChatThreadSeparator = (item) =>{
-    console.log(item)
+   
+    const index = 0//allMessages.findIndex(x => x._id == item.leadingItem._id)   //disabled 
+    let sameDate = true
+    if(index > 0){
+      const currentMessageTime = decapsulateDateFromId(item.leadingItem._id)
+      var nextMessageTime = decapsulateDateFromId(allMessages[index - 1]._id)
+      sameDate = currentMessageTime.getDate() == nextMessageTime.getDate() &&
+      currentMessageTime.getMonth() == nextMessageTime.getMonth()
+    }
+    
     return(
-      <Text>Hello separator</Text>
+      !sameDate ? 
+      <View style={{
+        alignItems: "center",
+        paddingTop: 10,
+        paddingBottom: 10,
+      }}>
+        <Text style={{
+        backgroundColor: "#009688",
+        borderRadius: 5,
+        paddingLeft: 8,
+        paddingRight: 8,
+      }}>{nextMessageTime.toDateString()}</Text> 
+      </View> : null
     )
   }
 
@@ -121,17 +145,12 @@ const ChatScreen = (props) => {
       </View>
       <View style={styles.messagesWindow}>
         <FlatList style={styles.messageThread}
-        // ref={ref => {scrollView = ref}}
-        // onContentSizeChange={() => scrollView.scrollToEnd({animated: true})}
         inverted
         data={allMessages}
         renderItem={renderItem}
         ItemSeparatorComponent = { ChatThreadSeparator }
-        keyExtractor={(item) => item._id}>
-          {/* {allMessages.map((x) => (
-            <MessageBox key={x._id} body={x.Body} isMine={props.connectionReducer.connection.current.myId == x.Sender} timestamp={decapsulateDateFromId(x._id)}></MessageBox>
-            // <Text key={x._id}>{x.Body}</Text>
-          ))} */}
+        keyExtractor={(item) => item._id}
+        extraData={reRenderFlag}>
         </FlatList>
       </View>
       <View style={styles.sendMessageBox}>
@@ -140,7 +159,7 @@ const ChatScreen = (props) => {
           value={toSend}
           onChangeText={(text) => setSendMessage(text)}
           placeholder="Message"></TextInput>
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+        <TouchableOpacity style={styles.sendButton} onPress={() =>{sendMessage()}}>
           <FontAwesomeIcon
             icon={faPaperPlane}
             size={28}
