@@ -10,6 +10,7 @@ import {
   Text,
   Image,
   TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
@@ -36,6 +37,7 @@ const ChatScreen = (props) => {
   const chatId = props.route.params.chatId;
   const [toSend, setSendMessage] = useState('');
   const [allMessages, setAllMessages] = useState([]);
+
 
   const sendMessage = () => {
     if(!isEmptyOrSpaces(toSend)){
@@ -98,6 +100,12 @@ const ChatScreen = (props) => {
     return date
   }
 
+  const renderItem = ({ item }) => {
+    return(
+      <MessageBox body={item.Body} isMine={props.connectionReducer.connection.current.myId == item.Sender} timestamp={decapsulateDateFromId(item._id)}></MessageBox>
+    )
+  }
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.chatHeader}>
@@ -105,12 +113,17 @@ const ChatScreen = (props) => {
         <Text style={styles.chatName}>{props.route.params.chatName}</Text>
       </View>
       <View style={styles.messagesWindow}>
-        <ScrollView style={styles.messageThread}>
-          {allMessages.map((x) => (
+        <FlatList style={styles.messageThread}
+        ref={ref => {scrollView = ref}}
+        onContentSizeChange={() => scrollView.scrollToEnd({animated: true})}
+        data={allMessages}
+        renderItem={renderItem}
+        keyExtractor={(item) => item._id}>
+          {/* {allMessages.map((x) => (
             <MessageBox key={x._id} body={x.Body} isMine={props.connectionReducer.connection.current.myId == x.Sender} timestamp={decapsulateDateFromId(x._id)}></MessageBox>
             // <Text key={x._id}>{x.Body}</Text>
-          ))}
-        </ScrollView>
+          ))} */}
+        </FlatList>
       </View>
       <View style={styles.sendMessageBox}>
         <TextInput
