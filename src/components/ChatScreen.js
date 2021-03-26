@@ -47,7 +47,7 @@ const ChatScreen = (props) => {
         ChatId: chatId,
         Body: toSend,
       };
-      props.sendDataToServer(4, true, sendObj, (response) => {
+      await props.sendDataToServer(4, true, sendObj, (response) => {
         console.log(response);
         // setAllMessages([response, ...allMessages])
         // setRerenderFlag(!reRenderFlag)
@@ -70,7 +70,6 @@ const ChatScreen = (props) => {
   }, []);
 
   useEffect(() => {
-    console.log();
     props.subscribeToUpdate(5, 'chatscreen', (data) => {
       if (data.ChatId == chatId) {
         let newMessages = data.NewMessages
