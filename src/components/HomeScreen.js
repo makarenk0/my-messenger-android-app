@@ -9,6 +9,7 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {showModal, hideModal} from '../actions/ModalActions';
@@ -261,7 +262,7 @@ const HomeScreen = (props) => {
   const chatPressed = (chatId, chatName) => {
     props.navigation.navigate('ChatScreen', {chatId: chatId, chatName: chatName});
   };
-
+  
   return (
     <View>
       <ScrollView>
@@ -274,9 +275,11 @@ const HomeScreen = (props) => {
             onPress={chatPressed}></ChatRepresenter>
         ))}
       </ScrollView>
+      
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({});
 

@@ -33,14 +33,16 @@ import {createStore} from 'redux';
 import connectionReducer from './src/reducers/ConnectionReducer';
 import localDBReducer from './src/reducers/LocalDBReducer';
 //import modalReducer from './src/reducers/ModalReducer';
-import MyTestTCP from './src/components/MyTestTCP.js';
+import MyTestTCP from './src/components/MyTestTCP';
 import Test2 from './src/components/Test2';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 
 import LogInScreen from './src/components/LogInScreen';
 import SignUpScreen from './src/components/SignUpScreen';
 import HomeScreen from './src/components/HomeScreen';
+import UserScreen from './src/components/UserScreen';
 import ChatScreen from './src/components/ChatScreen';
 import RootModal from './src/components/Modals/RootModal'
 
@@ -73,9 +75,8 @@ export default function App() {
               component={LogInScreen}
               options={{headerShown: false}}
             />
-            {/* <MyTestTCP></MyTestTCP> */}
             <Stack.Screen name="Sign Up" component={SignUpScreen} />
-            <Stack.Screen name="Home" component={HomeScreen} options={{headerShown: false}}/>
+            <Stack.Screen name="Home" component={UserScreen} options={{headerShown: false}}/>
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerShown: false}}/>
           </Stack.Navigator>
         </NavigationContainer>
