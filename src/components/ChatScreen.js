@@ -136,6 +136,10 @@ const ChatScreen = (props) => {
     )
   }
 
+  const chatEndRiched = () =>{
+    console.log("end reached")
+  }
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.chatHeader}>
@@ -149,7 +153,8 @@ const ChatScreen = (props) => {
         renderItem={renderItem}
         ItemSeparatorComponent = { ChatThreadSeparator }
         keyExtractor={(item) => item._id}
-        extraData={reRenderFlag}>
+        extraData={reRenderFlag}
+        onEndReached={chatEndRiched}>
         </FlatList>
       </View>
       <View style={styles.sendMessageBox}>

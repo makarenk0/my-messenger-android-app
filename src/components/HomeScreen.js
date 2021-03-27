@@ -9,6 +9,7 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {showModal, hideModal} from '../actions/ModalActions';
@@ -116,7 +117,7 @@ const HomeScreen = (props) => {
     });
   }, [allChats]);
 
-  const zeroPacketResquest = (LastChatsMessages, ChatRepresentorsLocalData) => {
+  const zeroPacketRequest = (LastChatsMessages, ChatRepresentorsLocalData) => {
 
     let ChatRepresentorsUpdatedData = []; // this array will be a response data for "LastChatsMessages" array
 
@@ -210,12 +211,12 @@ const HomeScreen = (props) => {
           {Type: 'localChatsIds', ChatIds: []},
           (err, newDoc) => {
             console.log('Local chats initialized');
-            zeroPacketResquest([], []);
+            zeroPacketRequest([], []);
           },
         );
       } else {
         if (docs[0].ChatIds.length == 0) {
-          zeroPacketResquest([], []);
+          zeroPacketRequest([], []);
         } else {
           let LastChatsMessages = []; //this array will be send to server and server will determine which new messages do you need (or new chats)
           var ChatRepresentorsLocalData = []; // this array is formed with data of chats which are stored locally
@@ -250,7 +251,7 @@ const HomeScreen = (props) => {
           });
           // waiting for all requests are completed on database
           Promise.all(allPreojectionPromises).then((res) => {
-            zeroPacketResquest(LastChatsMessages, ChatRepresentorsLocalData);
+            zeroPacketRequest(LastChatsMessages, ChatRepresentorsLocalData);
           });
         }
       }
@@ -261,7 +262,7 @@ const HomeScreen = (props) => {
   const chatPressed = (chatId, chatName) => {
     props.navigation.navigate('ChatScreen', {chatId: chatId, chatName: chatName});
   };
-
+  
   return (
     <View>
       <ScrollView>
@@ -274,9 +275,11 @@ const HomeScreen = (props) => {
             onPress={chatPressed}></ChatRepresenter>
         ))}
       </ScrollView>
+      
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({});
 
