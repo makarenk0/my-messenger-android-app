@@ -35,6 +35,26 @@ import ChatRepresenter from './ChatRepresenter';
 const HomeScreen = (props) => {
   const [allChats, setAllChats] = useState([]);
 
+  //after leaving chat screen clear new messages counter
+  useEffect(() => {
+    if(props.route.params?.backFromChat){
+      let backFromChatIndex = allChats.findIndex(x => x.chatId == props.route.params.backFromChat)
+      console.log(backFromChatIndex)
+      let updated = allChats
+      updated[backFromChatIndex].newMessagesNum = 0
+      setAllChats(updated)
+
+      props.updateValue(
+        {_id: props.route.params.backFromChat},
+        {NewMessagesNum: 0},
+      );
+
+      props.navigation.setParams({backFromChat: null})
+    }
+  }, [props.route.params?.backFromChat])
+
+
+
   const addNewChatToDB = (chat) => {
     let newMessages = chat.NewMessages;
     props.saveDocToDB(
@@ -43,6 +63,7 @@ const HomeScreen = (props) => {
         ChatName: chat.ChatName,
         Members: chat.Members,
         Messages: chat.NewMessages,
+        NewMessagesNum: newMessages.length,
         LastMessageId: newMessages[newMessages.length - 1]._id,
       },
       (err, newDoc) => {
@@ -63,13 +84,17 @@ const HomeScreen = (props) => {
   const updateExistingChatInDB = (chat) => {
     let newMessages = chat.NewMessages;
     //adding all new messages to messages array
-    console.log("adding all new messages to messages array")
+    console.log('adding all new messages to messages array');
     props.addManyToArray({_id: chat.ChatId}, 'Messages', newMessages);
-    //updating "LastMessageId" field
-    props.updateValue(
-      {_id: chat.ChatId},
-      {LastMessageId: newMessages[newMessages.length - 1]._id},
-    );
+    props.getProjected({_id: chat.ChatId}, {NewMessagesNum: 1}, (promise) => {
+      promise.then((el) => {
+        //updating "LastMessageId" field
+        props.updateValue(
+          {_id: chat.ChatId},
+          {NewMessagesNum: el[0].NewMessagesNum + newMessages.length, LastMessageId: newMessages[newMessages.length - 1]._id},
+        );
+      });
+    });
   };
 
   const updateAllChatsToDisplay = (local, updated) => {
@@ -79,7 +104,7 @@ const HomeScreen = (props) => {
       let update = updated.find((y) => y.chatId == x.chatId);
       if (typeof update !== 'undefined') {
         //update counter only in case there is an update
-        x.newMessagesNum = update.newMessagesNum;
+        x.newMessagesNum += update.newMessagesNum;
       }
       return x;
     });
@@ -90,7 +115,6 @@ const HomeScreen = (props) => {
 
     //applying changes
     console.log('Changing all chats data to display');
-    console.log(local);
     setAllChats(local);
   };
 
@@ -118,7 +142,6 @@ const HomeScreen = (props) => {
   }, [allChats]);
 
   const zeroPacketRequest = (LastChatsMessages, ChatRepresentorsLocalData) => {
-
     let ChatRepresentorsUpdatedData = []; // this array will be a response data for "LastChatsMessages" array
 
     let regObj = {
@@ -129,13 +152,12 @@ const HomeScreen = (props) => {
 
     //after "LastChatsMessages" array formed - send it to server and subscribe for real-time update on packet number 5
     props.sendDataToServer(7, true, regObj, (response) => {
-      
       if (response.Status == 'error') {
         //in case of some error
         console.log(response.Details);
       } else {
         //in case of success
-      
+
         // going through server response array of new messages and new chats(if there are such)
         response.AllChats.forEach((element) => {
           if (element.IsNew) {
@@ -168,12 +190,12 @@ const HomeScreen = (props) => {
     props.loadDB('localDB');
 
     //show all
-    props.loadDocFromDB({}, (err, docs) => {
-      console.log('');
-      console.log('All docs:');
-      console.log(docs);
-      console.log('');
-    });
+    // props.loadDocFromDB({}, (err, docs) => {
+    //   console.log('');
+    //   console.log('All docs:');
+    //   console.log(docs);
+    //   console.log('');
+    // });
 
     //remove all
     // props.removeDocFromDB({}, true, (err, numberOfRemoved) =>{
@@ -220,7 +242,7 @@ const HomeScreen = (props) => {
         } else {
           let LastChatsMessages = []; //this array will be send to server and server will determine which new messages do you need (or new chats)
           var ChatRepresentorsLocalData = []; // this array is formed with data of chats which are stored locally
-          
+
           let allPreojectionPromises = []; // as access to local db is async, each request for chat return promise, so to get all chats and then do something we should wait for all promises
           docs[0].ChatIds.forEach((chatId) => {
             console.log(chatId);
@@ -228,7 +250,7 @@ const HomeScreen = (props) => {
             //we need only projections (Only "LastMessageId" field, "ChatName" field and "Members" field )
             props.getProjected(
               {_id: chatId},
-              {LastMessageId: 1, ChatName: 1, Members: 1},
+              {LastMessageId: 1, ChatName: 1, Members: 1, NewMessagesNum: 1},
               (promise) => {
                 promise.then((lastMessageId) => {
                   //pushing data from db to array
@@ -236,7 +258,7 @@ const HomeScreen = (props) => {
                     chatId: chatId,
                     chatName: lastMessageId[0].ChatName,
                     chatMembers: lastMessageId[0].Members,
-                    newMessagesNum: 0, //TO DO: create a field of number of new messages in db
+                    newMessagesNum: lastMessageId[0].NewMessagesNum, //TO DO: create a field of number of new messages in db
                   });
                   //pushing "ChatId" and "LastMessageId" to array which will be send to server
                   LastChatsMessages.push({
@@ -258,11 +280,26 @@ const HomeScreen = (props) => {
     });
   }, []);
 
+
+  // useEffect(() => {
+  //   // const unsubscribe = props.navigation.addListener('focus', () => {
+  //   //   console.log("Focused on home screen")
+  //   //   //console.log(chatId)
+  //   // });
+  //   // return unsubscribe;
+  // }, []);
+
+
   // in case of chat is pressed (navigating to "ChatScreen" and passing chatId )
   const chatPressed = (chatId, chatName) => {
-    props.navigation.navigate('ChatScreen', {chatId: chatId, chatName: chatName});
+    props.navigation.navigate('ChatScreen', {
+      chatId: chatId,
+      chatName: chatName,
+    });    
   };
-  
+
+
+
   return (
     <View>
       <ScrollView>
@@ -275,11 +312,9 @@ const HomeScreen = (props) => {
             onPress={chatPressed}></ChatRepresenter>
         ))}
       </ScrollView>
-      
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({});
 

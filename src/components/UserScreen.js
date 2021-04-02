@@ -9,7 +9,7 @@ const UserScreen = (props) => {
     const Drawer = createDrawerNavigator();
     return(
       <Drawer.Navigator drawerContent={(props) => <ConnectedDrawerContent {...props}/>}>
-          <Drawer.Screen name="Chats" component={HomeScreen} />
+          <Drawer.Screen name="Chats" component={HomeScreen}/>
           <Drawer.Screen name="Other users" component={OtherUsersScreen} />
       </Drawer.Navigator>
     )

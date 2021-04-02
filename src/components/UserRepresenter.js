@@ -11,18 +11,17 @@ import {
   TouchableOpacity,
   TouchableHighlight,
 } from 'react-native';
-import {greaterThan} from 'react-native-reanimated';
 
-const ChatRepresenter = (props) => {
-  const chatPressed = () => {
-    props.onPress(props.chatId, props.chatName);
+const UserRepresenter = (props) => {
+  const userPressed = () => {
+    //props.onPress(props.chatId, props.chatName);
   };
 
   return (
     <View style={styles.mainContainer}>
       <TouchableHighlight
         style={styles.touchZone}
-        onPress={chatPressed}
+        onPress={userPressed}
         underlayColor="#67daf9">
         <View style={styles.innerBox}>
           {/* <Image style={styles.chatImage}></Image> */}
@@ -38,14 +37,11 @@ const ChatRepresenter = (props) => {
             }}
             activeOpacity={0.7}
           />
-          <Text style={styles.chatName}>{props.chatName}</Text>
-          <View style={styles.newMessagesCounterBox}>
-            {props.newMessagesNum == 0 ? null : (
-              <Text style={styles.newMessagesCounterText}>
-                {props.newMessagesNum}
-              </Text>
-            )}
+          <View>
+            <Text style={styles.userName}>{props.userFirstName} {props.userLastName}</Text>
+            <Text style={styles.userLogin}>@{props.userLogin}</Text>
           </View>
+          
         </View>
       </TouchableHighlight>
     </View>
@@ -64,11 +60,15 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#fff',
   },
-  chatName: {
+  userName: {
     fontWeight: 'bold',
     marginLeft: 20,
     marginTop: 5,
     fontSize: 18,
+  },
+  userLogin: {
+    marginTop: 5,
+    marginLeft: 20,
   },
   innerBox: {
     flexDirection: 'row',
@@ -92,4 +92,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChatRepresenter;
+export default UserRepresenter;
+
+
+
