@@ -11,6 +11,7 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  BackHandler,
 } from 'react-native';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
@@ -56,6 +57,26 @@ const ChatScreen = (props) => {
     }
   };
 
+  const handleBackPress = () =>{
+    BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+   
+
+    props.unsubscribeFromUpdate('chatscreen', (removed) => {
+      console.log('Subscription removed:');
+      console.log(removed);
+    });
+
+    props.navigation.navigate('Chats', {
+      backFromChat: chatId,
+    });    
+    return true
+  }
+
+  useEffect(() =>{
+    BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+  }, [])
+  
+
   const isEmptyOrSpaces = (str) =>{
     return str === null || str.match(/^ *$/) !== null;
   }
@@ -87,10 +108,7 @@ const ChatScreen = (props) => {
   // action when leave screen
   useEffect(() => {
     const unsubscribe = props.navigation.addListener('beforeRemove', () => {
-      props.unsubscribeFromUpdate('chatscreen', (removed) => {
-        console.log('Subscription removed:');
-        console.log(removed);
-      });
+      
     });
 
     return unsubscribe;

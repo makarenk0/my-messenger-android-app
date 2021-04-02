@@ -49,6 +49,7 @@ import RootModal from './src/components/Modals/RootModal'
 
 import {ModalReducer} from './src/reducers/ModalReducer';
 import {combineReducers} from 'redux';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 
@@ -67,6 +68,7 @@ export default function App() {
 
 
   return (
+    <SafeAreaProvider>
     <Provider store={store}>
         <NavigationContainer>
           <Stack.Navigator>
@@ -83,6 +85,7 @@ export default function App() {
         <RootModal />
       {/* <Modal animationType="slide" visible={modalVisibility} transparent={true}><Text>This is modal</Text></Modal> */}
     </Provider>
+    </SafeAreaProvider>
   );
 }
 

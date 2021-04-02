@@ -92,7 +92,7 @@ const LogInScreen = (props) => {
           console.log(e)
         }
 
-        props.navigation.navigate('Home');
+        props.navigation.navigate('Home', {test: "hello"});
       }
       //console.log(props.connectionReducer.connection.current.sessionToken)
     });
