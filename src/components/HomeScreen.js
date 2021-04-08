@@ -46,10 +46,10 @@ const HomeScreen = (props) => {
       );
       console.log(backFromChatIndex);
       let updated = allChats;
-      if(updated[backFromChatIndex] != null){
+      if (updated[backFromChatIndex] != null) {
         updated[backFromChatIndex].newMessagesNum = 0;
         setAllChats(updated);
-  
+
         props.updateValue(
           {_id: props.route.params.backFromChat},
           {NewMessagesNum: 0},
@@ -66,6 +66,7 @@ const HomeScreen = (props) => {
         _id: chat.ChatId,
         ChatName: chat.ChatName,
         Members: chat.Members,
+        IsGroup: chat.IsGroup,
         Messages: chat.NewMessages,
         NewMessagesNum: newMessages.length,
         LastMessageId: newMessages[newMessages.length - 1]._id,
@@ -315,8 +316,7 @@ const HomeScreen = (props) => {
   ];
 
   return (
-    <View style={{height: "100%"}}>
-      
+    <View style={{height: '100%'}}>
       <ScrollView>
         {allChats.map((x) => (
           <ChatRepresenter
@@ -332,7 +332,13 @@ const HomeScreen = (props) => {
         buttonSize={70}
         //distanceToEdge={{vertical: 100, horizontal: 10}}
         onPressItem={(name) => {
-          console.log(`selected button: ${name}`);
+          switch (name) {
+            case 'bt_group_chat':
+              props.navigation.navigate('CreateGroupChatScreen', {});
+              break;
+            default:
+              break;
+          }
         }}
       />
     </View>

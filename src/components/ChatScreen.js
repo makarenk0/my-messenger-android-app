@@ -39,6 +39,7 @@ const ChatScreen = (props) => {
   const [toSend, setSendMessage] = useState('');
   const [allMessages, setAllMessages] = useState([]);
   const [reRenderFlag, setRerenderFlag] = useState(true);
+  const [isGroup, setGroupFlag] = useState(false)
 
   const sendMessage = async() => { 
     if(!isEmptyOrSpaces(toSend)){
@@ -58,15 +59,15 @@ const ChatScreen = (props) => {
       else{
         let sendObj = {
           SessionToken: props.connectionReducer.connection.current.sessionToken,
-          UserId: props.route.params.userId,
+          UserIds: [props.route.params.userId, props.connectionReducer.connection.current.myId],
           Body: toSend,
         };
-        await props.sendDataToServer(6, true, sendObj, (response) => {  //callback is not needed
+        await props.sendDataToServer(6, true, sendObj, (response) => {   //only for private chats
           console.log(response);
           props.navigation.setParams({
             chatId: response.ChatId,
           })
-          
+
           setAllMessages([...response.NewMessages, ...allMessages])
           setRerenderFlag(!reRenderFlag)
         });
@@ -104,6 +105,7 @@ const ChatScreen = (props) => {
       if(docs.length == 1){
         let chat = docs[0]      
         setAllMessages(chat.Messages.reverse())
+        setGroupFlag(chat.IsGroup)
       }  
     })
   }, []);
@@ -140,7 +142,7 @@ const ChatScreen = (props) => {
 
   const renderItem = ({ item }) => {
     return(
-      <MessageBox body={item.Body} isMine={props.connectionReducer.connection.current.myId == item.Sender} timestamp={decapsulateDateFromId(item._id)}></MessageBox>
+      <MessageBox body={item.Body} isGroup={isGroup} isSystem={item.Sender == "System"} isMine={props.connectionReducer.connection.current.myId == item.Sender} userId={item.Sender} timestamp={decapsulateDateFromId(item._id)}></MessageBox>
     )
   }
 

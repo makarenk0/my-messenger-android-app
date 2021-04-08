@@ -14,13 +14,19 @@ import {
 
 const UserRepresenter = (props) => {
   const userPressed = () => {
-    props.userPressed(props.userId, props.userFirstName + " " + props.userLastName)
+    props.userPressed(
+      props.userId,
+      props.userFirstName + ' ' + props.userLastName,
+    );
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <View
+      style={
+        props.border ? styles.mainContainerWithBorder : styles.mainContainer
+      }>
       <TouchableHighlight
-        style={styles.touchZone}
+        style={{width: '100%', height: '100%', backgroundColor: props.backgroundColor}}
         onPress={userPressed}
         underlayColor="#67daf9">
         <View style={styles.innerBox}>
@@ -38,10 +44,11 @@ const UserRepresenter = (props) => {
             activeOpacity={0.7}
           />
           <View>
-            <Text style={styles.userName}>{props.userFirstName} {props.userLastName}</Text>
+            <Text style={styles.userName}>
+              {props.userFirstName} {props.userLastName}
+            </Text>
             <Text style={styles.userLogin}>@{props.userLogin}</Text>
           </View>
-          
         </View>
       </TouchableHighlight>
     </View>
@@ -52,13 +59,12 @@ const styles = StyleSheet.create({
   mainContainer: {
     width: '100%',
     height: 80,
+  },
+  mainContainerWithBorder: {
+    width: '100%',
+    height: 80,
     borderColor: '#a9a9a9',
     borderWidth: 1,
-  },
-  touchZone: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#fff',
   },
   userName: {
     fontWeight: 'bold',
@@ -93,6 +99,3 @@ const styles = StyleSheet.create({
 });
 
 export default UserRepresenter;
-
-
-

@@ -65,6 +65,7 @@ const OtherUsersScreen = (props) => {
   const renderItem = ({item}) => {
     return (
       <UserRepresenter
+        border={true}
         userId={item.UserID}
         userFirstName={item.FirstName}
         userLastName={item.LastName}

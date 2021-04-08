@@ -5,16 +5,32 @@ const MessageBox = (props) => {
   return (
     <View style={{alignItems: props.isMine ? 'flex-end' : 'flex-start'}}>
       <View
-        style={{
-          backgroundColor: props.isMine ? '#00BCD4' : '#03a9f4',
-          padding: 10,
-          borderRadius: 5,
-          marginTop: 10,
-          marginRight: props.isMine ? 15 : 0,
-          marginLeft: props.isMine ? 0 : 15,
-        }}>
+        style={
+          props.isSystem
+            ? {
+                backgroundColor: "#b8b5ff",
+                borderRadius: 5,
+                paddingLeft: 8,
+                paddingRight: 8,
+                marginTop: 10,
+                alignSelf: "center"
+            }
+            : {
+                backgroundColor: props.isMine ? '#00BCD4' : '#03a9f4',
+                padding: 10,
+                borderRadius: 5,
+                marginTop: 10,
+                marginRight: props.isMine ? 15 : 0,
+                marginLeft: props.isMine ? 0 : 15,
+              }
+        }>
+          {!props.isMine && !props.isSystem && props.isGroup ? <Text style={styles.body}>{props.userId}</Text> : null}
         <Text style={styles.body}>{props.body}</Text>
-        <Text style={styles.timestamp}>{props.timestamp.getHours()+":"+props.timestamp.getMinutes()}</Text>
+        <Text style={props.isSystem ? {
+          alignSelf: "center"
+        }: styles.timestamp}>
+          {props.isSystem ? "at " : null}{props.timestamp.getHours() + ':' + props.timestamp.getMinutes()}
+        </Text>
       </View>
     </View>
   );
@@ -25,11 +41,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'green',
   },
   body: {
-    maxWidth: "80%",
+    maxWidth: '80%',
   },
   timestamp: {
-      fontSize: 11,
-  }
+    fontSize: 11,
+  },
 });
 
 export default MessageBox;
