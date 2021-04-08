@@ -44,6 +44,7 @@ import SignUpScreen from './src/components/SignUpScreen';
 import HomeScreen from './src/components/HomeScreen';
 import UserScreen from './src/components/UserScreen';
 import ChatScreen from './src/components/ChatScreen';
+import CreateGroupChatScreen from './src/components/CreateGroupChatScreen';
 import RootModal from './src/components/Modals/RootModal'
 
 
@@ -80,6 +81,7 @@ export default function App() {
             <Stack.Screen name="Sign Up" component={SignUpScreen} />
             <Stack.Screen name="Home" component={UserScreen} options={{headerShown: false}}/>
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={{headerShown: false}}/>
+            <Stack.Screen name="CreateGroupChatScreen" component={CreateGroupChatScreen} options={{headerShown: false}}/>
           </Stack.Navigator>
         </NavigationContainer>
         <RootModal />

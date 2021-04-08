@@ -43,17 +43,34 @@ const ChatScreen = (props) => {
   const sendMessage = async() => { 
     if(!isEmptyOrSpaces(toSend)){
       setSendMessage('');
-      let sendObj = {
-        SessionToken: props.connectionReducer.connection.current.sessionToken,
-        ChatId: chatId,
-        Body: toSend,
-      };
-      await props.sendDataToServer(4, true, sendObj, (response) => {
-        console.log(response);
-        // setAllMessages([response, ...allMessages])
-        // setRerenderFlag(!reRenderFlag)
-        
-      });
+      if(chatId != "new"){
+        let sendObj = {
+          SessionToken: props.connectionReducer.connection.current.sessionToken,
+          ChatId: chatId,
+          Body: toSend,
+        };
+        await props.sendDataToServer(4, true, sendObj, (response) => {
+          console.log(response);
+          // setAllMessages([response, ...allMessages])
+          // setRerenderFlag(!reRenderFlag)
+        });
+      }
+      else{
+        let sendObj = {
+          SessionToken: props.connectionReducer.connection.current.sessionToken,
+          UserId: props.route.params.userId,
+          Body: toSend,
+        };
+        await props.sendDataToServer(6, true, sendObj, (response) => {  //callback is not needed
+          console.log(response);
+          props.navigation.setParams({
+            chatId: response.ChatId,
+          })
+          
+          setAllMessages([...response.NewMessages, ...allMessages])
+          setRerenderFlag(!reRenderFlag)
+        });
+      }
     }
   };
 
@@ -84,9 +101,10 @@ const ChatScreen = (props) => {
   //getting chat data
   useEffect(() => {
     props.loadDocFromDB({_id: chatId}, (err, docs) =>{
-        let chat = docs[0]
-        
+      if(docs.length == 1){
+        let chat = docs[0]      
         setAllMessages(chat.Messages.reverse())
+      }  
     })
   }, []);
 

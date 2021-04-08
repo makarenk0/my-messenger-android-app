@@ -14,7 +14,7 @@ import {
 
 const UserRepresenter = (props) => {
   const userPressed = () => {
-    //props.onPress(props.chatId, props.chatName);
+    props.userPressed(props.userId, props.userFirstName + " " + props.userLastName)
   };
 
   return (

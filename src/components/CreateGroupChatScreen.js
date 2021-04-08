@@ -20,10 +20,9 @@ import {
   getProjected,
   updateValue,
 } from '../actions/LocalDBActions';
-import {SEARCH_USERS_WAIT_TIMEOUT} from '../configs';
 import UserRepresenter from './UserRepresenter';
 
-const OtherUsersScreen = (props) => {
+const CreateGroupChatScreen = (props) => {
   const [searchField, setSearchField] = useState('');
   const [resultUsers, setResultUsers] = useState([]);
   const [userInputTimer, setUserInputTimer] = useState('');
@@ -146,9 +145,9 @@ const mapDispatchToProps = (dispatch) =>
     dispatch,
   );
 
-const ConnectedOtherUsersScreen = connect(
+const ConnectedCreateGroupChatScreen = connect(
   mapStateToProps,
   mapDispatchToProps,
-)(OtherUsersScreen);
+)(CreateGroupChatScreen);
 
-export default ConnectedOtherUsersScreen;
+export default ConnectedCreateGroupChatScreen;

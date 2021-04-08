@@ -9,6 +9,9 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+import {faUsers} from '@fortawesome/free-solid-svg-icons';
+
+import {FloatingAction} from 'react-native-floating-action';
 
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
@@ -37,23 +40,24 @@ const HomeScreen = (props) => {
 
   //after leaving chat screen clear new messages counter
   useEffect(() => {
-    if(props.route.params?.backFromChat){
-      let backFromChatIndex = allChats.findIndex(x => x.chatId == props.route.params.backFromChat)
-      console.log(backFromChatIndex)
-      let updated = allChats
-      updated[backFromChatIndex].newMessagesNum = 0
-      setAllChats(updated)
-
-      props.updateValue(
-        {_id: props.route.params.backFromChat},
-        {NewMessagesNum: 0},
+    if (props.route.params?.backFromChat) {
+      let backFromChatIndex = allChats.findIndex(
+        (x) => x.chatId == props.route.params.backFromChat,
       );
-
-      props.navigation.setParams({backFromChat: null})
+      console.log(backFromChatIndex);
+      let updated = allChats;
+      if(updated[backFromChatIndex] != null){
+        updated[backFromChatIndex].newMessagesNum = 0;
+        setAllChats(updated);
+  
+        props.updateValue(
+          {_id: props.route.params.backFromChat},
+          {NewMessagesNum: 0},
+        );
+      }
+      props.navigation.setParams({backFromChat: null});
     }
-  }, [props.route.params?.backFromChat])
-
-
+  }, [props.route.params?.backFromChat]);
 
   const addNewChatToDB = (chat) => {
     let newMessages = chat.NewMessages;
@@ -91,7 +95,10 @@ const HomeScreen = (props) => {
         //updating "LastMessageId" field
         props.updateValue(
           {_id: chat.ChatId},
-          {NewMessagesNum: el[0].NewMessagesNum + newMessages.length, LastMessageId: newMessages[newMessages.length - 1]._id},
+          {
+            NewMessagesNum: el[0].NewMessagesNum + newMessages.length,
+            LastMessageId: newMessages[newMessages.length - 1]._id,
+          },
         );
       });
     });
@@ -280,7 +287,6 @@ const HomeScreen = (props) => {
     });
   }, []);
 
-
   // useEffect(() => {
   //   // const unsubscribe = props.navigation.addListener('focus', () => {
   //   //   console.log("Focused on home screen")
@@ -289,19 +295,28 @@ const HomeScreen = (props) => {
   //   // return unsubscribe;
   // }, []);
 
-
   // in case of chat is pressed (navigating to "ChatScreen" and passing chatId )
   const chatPressed = (chatId, chatName) => {
     props.navigation.navigate('ChatScreen', {
       chatId: chatId,
       chatName: chatName,
-    });    
+    });
   };
 
-
+  const actions = [
+    {
+      text: 'Add group chat',
+      icon: require('../images/group.png'),
+      name: 'bt_group_chat',
+      buttonSize: 60,
+      margin: 5,
+      position: 0,
+    },
+  ];
 
   return (
-    <View>
+    <View style={{height: "100%"}}>
+      
       <ScrollView>
         {allChats.map((x) => (
           <ChatRepresenter
@@ -312,6 +327,14 @@ const HomeScreen = (props) => {
             onPress={chatPressed}></ChatRepresenter>
         ))}
       </ScrollView>
+      <FloatingAction
+        actions={actions}
+        buttonSize={70}
+        //distanceToEdge={{vertical: 100, horizontal: 10}}
+        onPressItem={(name) => {
+          console.log(`selected button: ${name}`);
+        }}
+      />
     </View>
   );
 };
