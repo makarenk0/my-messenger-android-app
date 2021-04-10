@@ -37,6 +37,7 @@ import {
 } from '../actions/LocalDBActions';
 
 import ChatRepresenter from './ChatRepresenter';
+import { resolvePlugin } from '@babel/core';
 
 const HomeScreen = (props) => {
   const [allChats, setAllChats] = useState([]);
@@ -119,19 +120,28 @@ const HomeScreen = (props) => {
     let newMessages = chat.NewMessages;
     //adding all new messages to messages array
     console.log('adding all new messages to messages array');
-    props.addManyToArray({_id: chat.ChatId}, 'Messages', newMessages);
-    props.getProjected({_id: chat.ChatId}, {NewMessagesNum: 1}, (promise) => {
-      promise.then((el) => {
-        //updating "LastMessageId" field
-        props.updateValue(
-          {_id: chat.ChatId},
-          {
-            NewMessagesNum: el[0].NewMessagesNum + newMessages.length,
-            LastMessageId: newMessages[newMessages.length - 1]._id,
-          },
-        );
+    let addMessagesPromise = new Promise((resolve, reject) => {
+      props.addManyToArray({_id: chat.ChatId}, 'Messages', newMessages, () =>{
+        resolve()
       });
-    });
+    })
+    addMessagesPromise.then(() => {
+      props.getProjected({_id: chat.ChatId}, {NewMessagesNum: 1}, (promise) => {
+        promise.then((el) => {
+          //updating "LastMessageId" field
+          props.updateValue(
+            {_id: chat.ChatId},
+            {
+              NewMessagesNum: el[0].NewMessagesNum + newMessages.length,
+              LastMessageId: newMessages[newMessages.length - 1]._id,
+            },
+            () => {console.log("New messages counter updated")}
+          );
+        });
+      });
+    })
+    
+   
   };
 
   const updateAllChatsToDisplay = (local, updated) => {
