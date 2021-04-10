@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   SafeAreaView,
   Image,
@@ -8,11 +8,14 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Animated
 } from 'react-native';
 import {faUsers} from '@fortawesome/free-solid-svg-icons';
 
 import {FloatingAction} from 'react-native-floating-action';
-
+import {Button} from 'react-native-elements';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faBars} from '@fortawesome/free-solid-svg-icons';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {showModal, hideModal} from '../actions/ModalActions';
@@ -37,6 +40,32 @@ import ChatRepresenter from './ChatRepresenter';
 
 const HomeScreen = (props) => {
   const [allChats, setAllChats] = useState([]);
+
+  const [screenLoading, setScreenLoading] = useState(true);
+
+
+
+  let logoAnim = useRef(new Animated.Value(0)).current;
+
+  const startLogoAnim = () =>{
+    Animated.timing(logoAnim, {
+      toValue: 1,
+      duration: 25000,
+      useNativeDriver: true,
+    }).start();
+  }
+  
+  const stopLogoAnim = () =>{
+    setScreenLoading(false)
+    Animated.timing(logoAnim, {
+      toValue: 1,
+      duration: 25000,
+      useNativeDriver: true,
+    }).stop();
+  }
+
+
+
 
   //after leaving chat screen clear new messages counter
   useEffect(() => {
@@ -143,6 +172,7 @@ const HomeScreen = (props) => {
         chatName: data.ChatName,
         chatMembers: data.Members,
         isNew: data.IsNew,
+        isGroup: data.IsGroup,
         newMessagesNum: data.NewMessages.length,
       });
       updateAllChatsToDisplay(allChats, ChatRepresentorsUpdatedData);
@@ -150,7 +180,8 @@ const HomeScreen = (props) => {
   }, [allChats]);
 
   const zeroPacketRequest = (LastChatsMessages, ChatRepresentorsLocalData) => {
-    let ChatRepresentorsUpdatedData = []; // this array will be a response data for "LastChatsMessages" array
+    console.log("zero packet call")
+    
 
     let regObj = {
       SessionToken: props.connectionReducer.connection.current.sessionToken,
@@ -160,6 +191,7 @@ const HomeScreen = (props) => {
 
     //after "LastChatsMessages" array formed - send it to server and subscribe for real-time update on packet number 5
     props.sendDataToServer(7, true, regObj, (response) => {
+      let ChatRepresentorsUpdatedData = []; // this array will be a response data for "LastChatsMessages" array
       if (response.Status == 'error') {
         //in case of some error
         console.log(response.Details);
@@ -181,12 +213,12 @@ const HomeScreen = (props) => {
             chatName: element.ChatName,
             chatMembers: element.Members,
             isNew: element.IsNew,
+            isGroup: element.IsGroup,
             newMessagesNum: element.NewMessages.length,
           });
           // -----------------------
         });
       }
-
       updateAllChatsToDisplay(
         ChatRepresentorsLocalData,
         ChatRepresentorsUpdatedData,
@@ -258,7 +290,7 @@ const HomeScreen = (props) => {
             //we need only projections (Only "LastMessageId" field, "ChatName" field and "Members" field )
             props.getProjected(
               {_id: chatId},
-              {LastMessageId: 1, ChatName: 1, Members: 1, NewMessagesNum: 1},
+              {LastMessageId: 1, ChatName: 1, Members: 1, NewMessagesNum: 1, IsGroup: 1},
               (promise) => {
                 promise.then((lastMessageId) => {
                   //pushing data from db to array
@@ -266,6 +298,7 @@ const HomeScreen = (props) => {
                     chatId: chatId,
                     chatName: lastMessageId[0].ChatName,
                     chatMembers: lastMessageId[0].Members,
+                    isGroup: lastMessageId[0].IsGroup,
                     newMessagesNum: lastMessageId[0].NewMessagesNum, //TO DO: create a field of number of new messages in db
                   });
                   //pushing "ChatId" and "LastMessageId" to array which will be send to server
@@ -288,14 +321,6 @@ const HomeScreen = (props) => {
     });
   }, []);
 
-  // useEffect(() => {
-  //   // const unsubscribe = props.navigation.addListener('focus', () => {
-  //   //   console.log("Focused on home screen")
-  //   //   //console.log(chatId)
-  //   // });
-  //   // return unsubscribe;
-  // }, []);
-
   // in case of chat is pressed (navigating to "ChatScreen" and passing chatId )
   const chatPressed = (chatId, chatName) => {
     props.navigation.navigate('ChatScreen', {
@@ -315,8 +340,51 @@ const HomeScreen = (props) => {
     },
   ];
 
+  const spin = logoAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '4952deg'],
+  });
+
+  
+
   return (
     <View style={{height: '100%'}}>
+      <View style={{height: 55, width: "100%", backgroundColor: "#1597bb", flexDirection: "row"}}>
+      <Button
+        style={{borderRadius: 25}}
+        containerStyle={{width: 50, marginTop: 5, marginLeft: 5, height: 45, borderRadius: 25}}
+        buttonStyle={{backgroundColor: "#1597bb", borderRadius: 25}}
+        icon={
+          <FontAwesomeIcon
+          icon={faBars}
+          size={25}
+          style={{marginTop: 2}}
+          onPress={() =>{props.navigation.openDrawer()}}
+        />
+        }
+      />
+      <Text style={{fontSize: 22, textAlignVertical:"center", paddingLeft: 10}}>Chats</Text>
+      
+      
+      <TouchableOpacity
+        style={{width: 50,height: 50, position:"absolute", top: 2, right: 5, height: 45}}
+        onPress={() =>{startLogoAnim()}}
+      >
+      <Animated.Image
+          style={{
+          transform: [{rotate: spin}],
+          width: 50,
+          height: 50,
+          alignSelf: 'center',
+          resizeMode: 'contain',
+          
+        }}
+       
+        source={require('../images/logoLoader.png')}
+        
+      />
+      </TouchableOpacity>
+      </View>
       <ScrollView>
         {allChats.map((x) => (
           <ChatRepresenter
@@ -324,6 +392,7 @@ const HomeScreen = (props) => {
             chatId={x.chatId}
             chatName={x.chatName}
             newMessagesNum={x.newMessagesNum}
+            isGroup={x.isGroup}
             onPress={chatPressed}></ChatRepresenter>
         ))}
       </ScrollView>

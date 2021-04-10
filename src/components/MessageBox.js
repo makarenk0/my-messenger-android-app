@@ -24,12 +24,12 @@ const MessageBox = (props) => {
                 marginLeft: props.isMine ? 0 : 15,
               }
         }>
-          {!props.isMine && !props.isSystem && props.isGroup ? <Text style={styles.body}>{props.userId}</Text> : null}
+          {!props.isMine && !props.isSystem && props.isGroup ? <Text style={styles.senderName}>{props.memberName}</Text> : null}
         <Text style={styles.body}>{props.body}</Text>
         <Text style={props.isSystem ? {
           alignSelf: "center"
         }: styles.timestamp}>
-          {props.isSystem ? "at " : null}{props.timestamp.getHours() + ':' + props.timestamp.getMinutes()}
+          {props.isSystem ? "at " : null}{props.timestamp}
         </Text>
       </View>
     </View>
@@ -46,6 +46,10 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 11,
   },
+  senderName:{
+    fontWeight: "bold",
+    paddingBottom: 2
+  }
 });
 
 export default MessageBox;

@@ -29,7 +29,7 @@ const ChatRepresenter = (props) => {
           <Avatar
             rounded
             size={60}
-            icon={{name: 'user', type: 'font-awesome'}}
+            icon={{name: props.isGroup ? 'users':'user', type: 'font-awesome'}}
             containerStyle={{
               backgroundColor: '#ccc',
               marginTop: 10,

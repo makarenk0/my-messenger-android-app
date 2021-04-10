@@ -45,13 +45,14 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
             let onReceive = onReceiveCallbacks.filter(
               (x) => x.type == packetWithType.charAt(0),
             );
+            console.log(onReceiveCallbacks)
             onReceive.forEach((el) => {
               if (el.disposable) {
                 // if disposable use callback once and then remove object from callbacks array
                 let index = onReceiveCallbacks.findIndex(
-                  (x) => x.type == result.charAt(0),
+                  (x) => x.type == el.type,
                 );
-                onReceiveCallbacks.splice(index, 1);
+                let spliced = onReceiveCallbacks.splice(index, 1);
                 console.log('Callback with type ' + el.type + ' was disposed');
               }
               let getObj = JSON.parse(packetWithType.slice(1));
@@ -127,6 +128,8 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       );
       let removed = onReceiveCallbacks.splice(index, 1);
       action.payload.callback(removed)
+      console.log("onReceiveCallbacks: ")
+      console.log(onReceiveCallbacks)
       return state;
 
     case 'SET_SESSION_TOKEN_AND_ID':

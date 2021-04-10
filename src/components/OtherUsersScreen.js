@@ -2,6 +2,9 @@ import {View, Text, StyleSheet, ScrollView, TextInput} from 'react-native';
 import {SearchBar} from 'react-native-elements';
 import React, {useState, useEffect} from 'react';
 import {FlatList} from 'react-native';
+import {Button} from 'react-native-elements';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faBars} from '@fortawesome/free-solid-svg-icons';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {
@@ -33,6 +36,15 @@ const OtherUsersScreen = (props) => {
     return str === null || str.match(/^ *$/) !== null;
   };
 
+  const loadLocalContacts = () =>{
+    props.loadDocFromDB({Type: 'localUser'}, (err, docs) => {
+      let localContacts = docs.filter(x => x.UserID != props.connectionReducer.connection.current.myId)
+      setResultUsers(localContacts)
+    })
+  }
+
+
+
   useEffect(() => {
     if (userInputTimer !== '') {
       clearTimeout(userInputTimer);
@@ -59,6 +71,9 @@ const OtherUsersScreen = (props) => {
           console.log(response.Details);
         }
       });
+    }
+    else{
+      loadLocalContacts()
     }
   };
 
@@ -94,7 +109,24 @@ const OtherUsersScreen = (props) => {
 
   return (
     <View>
+      <View style={{height: 55, width: "100%", backgroundColor: "#1597bb", flexDirection: "row"}}>
+      <Button
+        style={{borderRadius: 25}}
+        containerStyle={{width: 50, marginTop: 5, marginLeft: 5, height: 45, borderRadius: 25}}
+        buttonStyle={{backgroundColor: "#1597bb", borderRadius: 25}}
+        icon={
+          <FontAwesomeIcon
+          icon={faBars}
+          size={25}
+          style={{marginTop: 2}}
+          onPress={() =>{props.navigation.openDrawer()}}
+        />
+        }
+      />
+      <Text style={{fontSize: 22, textAlignVertical:"center", paddingLeft: 10}}>Contacts</Text>
+      </View>
       <SearchBar
+        lightTheme
         style={styles.searchField}
         placeholder="Enter user login or name"
         onChangeText={setSearchField}

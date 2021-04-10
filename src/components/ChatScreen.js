@@ -2,6 +2,7 @@ import React, {useState, useEffect, useCallback} from 'react';
 import {NavigationEvents} from '@react-navigation/native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
+import {Avatar} from 'react-native-elements';
 import {
   StyleSheet,
   ScrollView,
@@ -25,6 +26,7 @@ import {
 
 import {
   loadDocFromDB,
+  saveDocToDB,
   removeDocFromDB,
   addOneToArray,
   addManyToArray,
@@ -39,83 +41,149 @@ const ChatScreen = (props) => {
   const [toSend, setSendMessage] = useState('');
   const [allMessages, setAllMessages] = useState([]);
   const [reRenderFlag, setRerenderFlag] = useState(true);
-  const [isGroup, setGroupFlag] = useState(false)
+  const [isGroup, setGroupFlag] = useState(false);
+  const [membersInfo, setMembersInfo] = useState([]);
 
-  const sendMessage = async() => { 
-    if(!isEmptyOrSpaces(toSend)){
+  //load members list
+  const getAllMembers = async (members) => {
+    console.log('members');
+    console.log(members);
+    var membersAbsentLocally = [];
+    var membersPresentLocally = [];
+
+    let promises = [];
+    members.forEach((x) => {
+      console.log('member iterate');
+      promises.push(
+        new Promise((resolve, reject) => {
+          props.loadDocFromDB({UserID: x}, (err, doc) => {
+            console.log(doc.length);
+            if (doc.length > 0) {
+              console.log('User info loaded locally');
+              membersPresentLocally.push(doc[0]);
+            } else {
+              console.log(x);
+              membersAbsentLocally.push(x);
+            }
+            resolve('done');
+          });
+        }),
+      );
+    });
+    Promise.all(promises).then((res) => {
+      if (membersAbsentLocally.length != 0) {
+        console.log('to server');
+        let finUsersObj = {
+          SessionToken: props.connectionReducer.connection.current.sessionToken,
+          UserIds: membersAbsentLocally,
+        };
+        console.log(finUsersObj);
+        props.sendDataToServer(3, true, finUsersObj, (response) => {
+          if (response.Status == 'success') {
+            setMembersInfo([...membersInfo, ...response.Users, ...membersPresentLocally]);
+
+            response.Users.forEach((x) => {
+              x['Type'] = 'localUser'
+              props.saveDocToDB(x, () => {});
+            });
+          } else {
+            console.log(response.Status);
+            console.log(response.Details);
+          }
+        });
+      }
+      else{
+        setMembersInfo([...membersInfo, ...membersPresentLocally]);
+      }
+      
+    });
+  };
+
+  useEffect(() => {
+    console.log(membersInfo);
+    setRerenderFlag(!reRenderFlag);
+  }, [membersInfo]);
+
+  const sendMessage = () => {
+    if (!isEmptyOrSpaces(toSend)) {
       setSendMessage('');
-      if(chatId != "new"){
+      if (chatId != 'new') {
         let sendObj = {
           SessionToken: props.connectionReducer.connection.current.sessionToken,
           ChatId: chatId,
           Body: toSend,
         };
-        await props.sendDataToServer(4, true, sendObj, (response) => {
+        props.sendDataToServer(4, true, sendObj, (response) => {
           console.log(response);
           // setAllMessages([response, ...allMessages])
           // setRerenderFlag(!reRenderFlag)
         });
-      }
-      else{
+      } else {
         let sendObj = {
           SessionToken: props.connectionReducer.connection.current.sessionToken,
-          UserIds: [props.route.params.userId, props.connectionReducer.connection.current.myId],
+          UserIds: [
+            props.route.params.userId,
+            props.connectionReducer.connection.current.myId,
+          ],
           Body: toSend,
         };
-        await props.sendDataToServer(6, true, sendObj, (response) => {   //only for private chats
+        props.sendDataToServer(6, true, sendObj, (response) => {
+          //only for private chats
           console.log(response);
           props.navigation.setParams({
             chatId: response.ChatId,
-          })
+          });
 
-          setAllMessages([...response.NewMessages, ...allMessages])
-          setRerenderFlag(!reRenderFlag)
+          setAllMessages([...response.NewMessages, ...allMessages]);
         });
       }
     }
   };
 
-  const handleBackPress = () =>{
+  useEffect(() => {
+    setRerenderFlag(!reRenderFlag);
+  }, [allMessages]);
+
+  const handleBackPress = () => {
+    props.navigation.navigate('Chats', {
+      backFromChat: chatId,
+    });
     BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
-   
 
     props.unsubscribeFromUpdate('chatscreen', (removed) => {
       console.log('Subscription removed:');
       console.log(removed);
     });
 
-    props.navigation.navigate('Chats', {
-      backFromChat: chatId,
-    });    
-    return true
-  }
+    return true;
+  };
 
-  useEffect(() =>{
+  useEffect(() => {
     BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-  }, [])
-  
+  }, []);
 
-  const isEmptyOrSpaces = (str) =>{
+  const isEmptyOrSpaces = (str) => {
     return str === null || str.match(/^ *$/) !== null;
-  }
+  };
 
   //getting chat data
   useEffect(() => {
-    props.loadDocFromDB({_id: chatId}, (err, docs) =>{
-      if(docs.length == 1){
-        let chat = docs[0]      
-        setAllMessages(chat.Messages.reverse())
-        setGroupFlag(chat.IsGroup)
-      }  
-    })
+    props.loadDocFromDB({_id: chatId}, (err, docs) => {
+      if (docs.length == 1) {
+        let chat = docs[0];
+        setAllMessages(chat.Messages.reverse());
+        setGroupFlag(chat.IsGroup);
+        getAllMembers(chat.Members);
+      }
+    });
   }, []);
 
   useEffect(() => {
     props.subscribeToUpdate(5, 'chatscreen', (data) => {
       if (data.ChatId == chatId) {
-        let newMessages = data.NewMessages
-        setAllMessages([...newMessages, ...allMessages])
-        setRerenderFlag(!reRenderFlag)
+        let newMessages = data.NewMessages;
+        setAllMessages([...newMessages, ...allMessages]);
+        setRerenderFlag(!reRenderFlag);
       }
     });
   }, [allMessages]);
@@ -127,73 +195,100 @@ const ChatScreen = (props) => {
 
   // action when leave screen
   useEffect(() => {
-    const unsubscribe = props.navigation.addListener('beforeRemove', () => {
-      
-    });
+    const unsubscribe = props.navigation.addListener('beforeRemove', () => {});
 
     return unsubscribe;
   }, [props.navigation]);
 
-  const decapsulateDateFromId = (id) =>{
-    let decapsulatedDate = parseInt(id.substring(0, 8), 16) * 1000
-    let date = new Date(decapsulatedDate)
-    return date
-  }
+  const decapsulateDateFromId = (id) => {
+    let decapsulatedDate = parseInt(id.substring(0, 8), 16) * 1000;
+    let date = new Date(decapsulatedDate);
+    return date.toTimeString().split(' ')[0].substr(0, 5);
+  };
 
-  const renderItem = ({ item }) => {
-    return(
-      <MessageBox body={item.Body} isGroup={isGroup} isSystem={item.Sender == "System"} isMine={props.connectionReducer.connection.current.myId == item.Sender} userId={item.Sender} timestamp={decapsulateDateFromId(item._id)}></MessageBox>
-    )
-  }
-
-  const ChatThreadSeparator = (item) =>{
-   
-    const index = 0//allMessages.findIndex(x => x._id == item.leadingItem._id)   //disabled 
-    let sameDate = true
-    if(index > 0){
-      const currentMessageTime = decapsulateDateFromId(item.leadingItem._id)
-      var nextMessageTime = decapsulateDateFromId(allMessages[index - 1]._id)
-      sameDate = currentMessageTime.getDate() == nextMessageTime.getDate() &&
-      currentMessageTime.getMonth() == nextMessageTime.getMonth()
+  const renderItem = ({item}) => {
+    let memberInfoIndex = membersInfo.findIndex((x) => x.UserID == item.Sender);
+    let memberInfo;
+    if (memberInfoIndex != -1) {
+      memberInfo = membersInfo[memberInfoIndex];
     }
-    
-    return(
-      !sameDate ? 
-      <View style={{
-        alignItems: "center",
-        paddingTop: 10,
-        paddingBottom: 10,
-      }}>
-        <Text style={{
-        backgroundColor: "#009688",
-        borderRadius: 5,
-        paddingLeft: 8,
-        paddingRight: 8,
-      }}>{nextMessageTime.toDateString()}</Text> 
-      </View> : null
-    )
-  }
+    return (
+      <MessageBox
+        body={item.Body}
+        isGroup={isGroup}
+        isSystem={item.Sender == 'System'}
+        isMine={props.connectionReducer.connection.current.myId == item.Sender}
+        memberName={
+          memberInfo == null
+            ? ''
+            : memberInfo.FirstName + ' ' + memberInfo.LastName
+        }
+        timestamp={decapsulateDateFromId(item._id)}></MessageBox>
+    );
+  };
 
-  const chatEndRiched = () =>{
-    console.log("end reached")
-  }
+  const ChatThreadSeparator = (item) => {
+    const index = 0; //allMessages.findIndex(x => x._id == item.leadingItem._id)   //disabled
+    let sameDate = true;
+    if (index > 0) {
+      const currentMessageTime = decapsulateDateFromId(item.leadingItem._id);
+      var nextMessageTime = decapsulateDateFromId(allMessages[index - 1]._id);
+      sameDate =
+        currentMessageTime.getDate() == nextMessageTime.getDate() &&
+        currentMessageTime.getMonth() == nextMessageTime.getMonth();
+    }
+
+    return !sameDate ? (
+      <View
+        style={{
+          alignItems: 'center',
+          paddingTop: 10,
+          paddingBottom: 10,
+        }}>
+        <Text
+          style={{
+            backgroundColor: '#009688',
+            borderRadius: 5,
+            paddingLeft: 8,
+            paddingRight: 8,
+          }}>
+          {nextMessageTime.toDateString()}
+        </Text>
+      </View>
+    ) : null;
+  };
+
+  const chatEndRiched = () => {
+    console.log('end reached');
+  };
 
   return (
     <View style={styles.mainContainer}>
       <View style={styles.chatHeader}>
-        <Image style={styles.chatImage}></Image>
+        <Avatar
+          rounded
+          size={55}
+          icon={{name: isGroup ? 'users' : 'user', type: 'font-awesome'}}
+          containerStyle={{
+            backgroundColor: '#ccc',
+            marginTop: 5,
+            marginBottom: 10,
+            marginLeft: 10,
+          }}
+          activeOpacity={0.7}
+        />
         <Text style={styles.chatName}>{props.route.params.chatName}</Text>
       </View>
       <View style={styles.messagesWindow}>
-        <FlatList style={styles.messageThread}
-        inverted
-        data={allMessages}
-        renderItem={renderItem}
-        ItemSeparatorComponent = { ChatThreadSeparator }
-        keyExtractor={(item) => item._id}
-        extraData={reRenderFlag}
-        onEndReached={chatEndRiched}>
-        </FlatList>
+        <FlatList
+          style={styles.messageThread}
+          inverted
+          data={allMessages}
+          renderItem={renderItem}
+          ItemSeparatorComponent={ChatThreadSeparator}
+          keyExtractor={(item) => item._id}
+          extraData={reRenderFlag}
+          onEndReached={chatEndRiched}></FlatList>
       </View>
       <View style={styles.sendMessageBox}>
         <TextInput
@@ -201,7 +296,11 @@ const ChatScreen = (props) => {
           value={toSend}
           onChangeText={(text) => setSendMessage(text)}
           placeholder="Message"></TextInput>
-        <TouchableOpacity style={styles.sendButton} onPress={() =>{sendMessage()}}>
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={() => {
+            sendMessage();
+          }}>
           <FontAwesomeIcon
             icon={faPaperPlane}
             size={28}
@@ -219,8 +318,8 @@ const styles = StyleSheet.create({
   },
   chatHeader: {
     height: 65,
-    backgroundColor: "#3F51B5",
-    flexDirection: "row",
+    backgroundColor: '#3F51B5',
+    flexDirection: 'row',
   },
   messagesWindow: {
     flex: 1,
@@ -228,7 +327,7 @@ const styles = StyleSheet.create({
   chatName: {
     marginLeft: 20,
     fontSize: 20,
-    textAlignVertical: "center",
+    textAlignVertical: 'center',
   },
   sendMessageBox: {
     flexDirection: 'row',
@@ -295,6 +394,7 @@ const mapDispatchToProps = (dispatch) =>
       addOneToArray,
       addManyToArray,
       removeFromArray,
+      saveDocToDB,
       getProjected,
       updateValue,
     },

@@ -24,6 +24,8 @@ import {SEARCH_USERS_WAIT_TIMEOUT} from '../configs';
 
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faUsers} from '@fortawesome/free-solid-svg-icons';
+import {faUserPlus} from '@fortawesome/free-solid-svg-icons';
+import {faUserCheck} from '@fortawesome/free-solid-svg-icons';
 import UserRepresenter from './UserRepresenter';
 
 const CreateGroupChatScreen = (props) => {
@@ -151,10 +153,10 @@ const CreateGroupChatScreen = (props) => {
       <FontAwesomeIcon icon={faUsers} size={120} style={styles.groupChatIcon} />
       <Input placeholder="Chat name" onChangeText={setChatName} />
       <Card containerStyle={{width: '100%', margin: 0, paddingTop: 5}}>
-        <Card.Title style={{fontSize: 18, marginBottom: 5}}>Members</Card.Title>
+        <Card.Title style={{fontSize: 18, marginBottom: 5}}>Members  <FontAwesomeIcon icon={faUserCheck} size={20} style={{}} /></Card.Title>
         <Card.Divider></Card.Divider>
         {chatUsers.length == 0 ? (
-          <Text>Add members of this chat</Text>
+          <Text style={{color: "#A9A9A9", paddingTop: 10, paddingBottom: 10}}>Add members of this chat</Text>
         ) : (
           <FlatList
             listKey={1}
@@ -165,9 +167,9 @@ const CreateGroupChatScreen = (props) => {
             keyExtractor={(item) => item.UserID}></FlatList>
         )}
       </Card>
-      <Card containerStyle={{width: '100%', margin: 0, paddingTop: 5}}>
+      <Card containerStyle={{width: '100%', minHeight: 500, margin: 0, paddingTop: 5}}>
         <Card.Title style={{fontSize: 18, marginBottom: 5}}>
-          Find users
+          Find users  <FontAwesomeIcon icon={faUserPlus} size={20} style={{}} />
         </Card.Title>
         <Card.Divider></Card.Divider>
         <SearchBar
