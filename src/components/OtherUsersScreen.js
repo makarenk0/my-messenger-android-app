@@ -38,7 +38,7 @@ const OtherUsersScreen = (props) => {
 
   const loadLocalContacts = () =>{
     props.loadDocFromDB({Type: 'localUser'}, (err, docs) => {
-      let localContacts = docs.filter(x => x.UserID != props.connectionReducer.connection.current.myId)
+      let localContacts = docs.filter(x => x.UserID != props.connectionReducer.connection.current.currentUser.UserID)
       setResultUsers(localContacts)
     })
   }
@@ -62,7 +62,7 @@ const OtherUsersScreen = (props) => {
         FindUsersRequest: searchField,
       };
 
-      props.sendDataToServer(3, true, finUsersObj, (response) => {
+      props.sendDataToServer('3', true, finUsersObj, (response) => {
         if (response.Status == 'success') {
           console.log(response.Users);
           setResultUsers(response.Users);

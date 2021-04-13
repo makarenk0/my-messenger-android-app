@@ -26,18 +26,37 @@ const ChatRepresenter = (props) => {
         underlayColor="#67daf9">
         <View style={styles.innerBox}>
           {/* <Image style={styles.chatImage}></Image> */}
-          <Avatar
-            rounded
-            size={60}
-            icon={{name: props.isGroup ? 'users':'user', type: 'font-awesome'}}
-            containerStyle={{
-              backgroundColor: '#ccc',
-              marginTop: 10,
-              marginBottom: 10,
-              marginLeft: 10,
-            }}
-            activeOpacity={0.7}
-          />
+          {props.isAssistant ? (
+            <Avatar
+              rounded
+              size={60}
+              source={require('../images/assistant_logo.jpg')}
+              containerStyle={{
+                backgroundColor: '#ccc',
+                marginTop: 10,
+                marginBottom: 10,
+                marginLeft: 10,
+              }}
+              activeOpacity={0.7}
+            />
+          ) : (
+            <Avatar
+              rounded
+              size={60}
+              icon={{
+                name: props.isGroup ? 'users' : 'user',
+                type: 'font-awesome',
+              }}
+              containerStyle={{
+                backgroundColor: '#ccc',
+                marginTop: 10,
+                marginBottom: 10,
+                marginLeft: 10,
+              }}
+              activeOpacity={0.7}
+            />
+          )}
+
           <Text style={styles.chatName}>{props.chatName}</Text>
           <View style={styles.newMessagesCounterBox}>
             {props.newMessagesNum == 0 ? null : (

@@ -24,7 +24,7 @@ import {
   connectToServer,
   initDiffieHellman,
   sendDataToServer,
-  setSessionTokenAndId,
+  setSessionTokenAndUserInfo,
 } from '../actions/ConnectionActions';
 import {
   LOCAL_SERVER_IP,
@@ -93,12 +93,12 @@ const LogInScreen = (props) => {
     };
     setLoading(true);
 
-    props.sendDataToServer(2, true, regObj, async (response) => {
+    props.sendDataToServer('2', true, regObj, async (response) => {
       setLoading(false);
       if (response.Status == 'error') {
         setErrorText(response.Details);
       } else {
-        props.setSessionTokenAndId(response.SessionToken, response.Id);
+        props.setSessionTokenAndUserInfo(response.SessionToken, response.UserInfo);
         let saveLogPassObj;
         if (rememberUser) {
           saveLogPassObj = {
@@ -322,7 +322,7 @@ const mapDispatchToProps = (dispatch) =>
       connectToServer,
       initDiffieHellman,
       sendDataToServer,
-      setSessionTokenAndId,
+      setSessionTokenAndUserInfo,
     },
     dispatch,
   );

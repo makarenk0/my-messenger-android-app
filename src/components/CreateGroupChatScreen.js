@@ -45,13 +45,13 @@ const CreateGroupChatScreen = (props) => {
 
   const createButtonPressed = () => {
     let chatUserWithOwner = chatUsers.map(x => x.UserID)
-    chatUserWithOwner.push(props.connectionReducer.connection.current.myId)
+    chatUserWithOwner.push(props.connectionReducer.connection.current.currentUser.UserID)
     let sendObj = {
         SessionToken: props.connectionReducer.connection.current.sessionToken,
         UserIds: chatUserWithOwner,
         ChatName: chatName
       };
-      props.sendDataToServer(8, true, sendObj, (response) => {   //only for private chats
+      props.sendDataToServer('8', true, sendObj, (response) => {   //only for private chats
         if(response.status = "success"){
             props.navigation.goBack()
         }
@@ -80,7 +80,7 @@ const CreateGroupChatScreen = (props) => {
         FindUsersRequest: searchField,
       };
 
-      props.sendDataToServer(3, true, finUsersObj, (response) => {
+      props.sendDataToServer('3', true, finUsersObj, (response) => {
         if (response.Status == 'success') {
           console.log(response.Users);
           let all = response.Users;

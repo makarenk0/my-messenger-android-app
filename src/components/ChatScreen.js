@@ -42,7 +42,9 @@ const ChatScreen = (props) => {
   const [allMessages, setAllMessages] = useState([]);
   const [reRenderFlag, setRerenderFlag] = useState(true);
   const [isGroup, setGroupFlag] = useState(false);
+  const [isAssistant, setAssistantFlag] = useState(chatId === props.connectionReducer.connection.current.currentUser.AssistantChatId);
   const [membersInfo, setMembersInfo] = useState([]);
+  const [selectedMessages, setSelectedMessages] = useState([])
 
   //load members list
   const getAllMembers = async (members) => {
@@ -78,7 +80,7 @@ const ChatScreen = (props) => {
           UserIds: membersAbsentLocally,
         };
         console.log(finUsersObj);
-        props.sendDataToServer(3, true, finUsersObj, (response) => {
+        props.sendDataToServer('3', true, finUsersObj, (response) => {
           if (response.Status == 'success') {
             setMembersInfo([...membersInfo, ...response.Users, ...membersPresentLocally]);
 
@@ -113,7 +115,7 @@ const ChatScreen = (props) => {
           ChatId: chatId,
           Body: toSend,
         };
-        props.sendDataToServer(4, true, sendObj, (response) => {
+        props.sendDataToServer(isAssistant ? 'a' : '4', true, sendObj, (response) => {
           console.log(response);
           // setAllMessages([response, ...allMessages])
           // setRerenderFlag(!reRenderFlag)
@@ -123,11 +125,11 @@ const ChatScreen = (props) => {
           SessionToken: props.connectionReducer.connection.current.sessionToken,
           UserIds: [
             props.route.params.userId,
-            props.connectionReducer.connection.current.myId,
+            props.connectionReducer.connection.current.currentUser.UserID,
           ],
           Body: toSend,
         };
-        props.sendDataToServer(6, true, sendObj, (response) => {
+        props.sendDataToServer('6', true, sendObj, (response) => {
           //only for private chats
           console.log(response);
           props.navigation.setParams({
@@ -179,9 +181,10 @@ const ChatScreen = (props) => {
   }, []);
 
   useEffect(() => {
-    props.subscribeToUpdate(5, 'chatscreen', (data) => {
+    props.subscribeToUpdate('5', 'chatscreen', (data) => {
       if (data.ChatId == chatId) {
-        let newMessages = data.NewMessages;
+        let newMessages = data.NewMessages.reverse();
+        console.log(newMessages)
         setAllMessages([...newMessages, ...allMessages]);
         setRerenderFlag(!reRenderFlag);
       }
@@ -217,7 +220,7 @@ const ChatScreen = (props) => {
         body={item.Body}
         isGroup={isGroup}
         isSystem={item.Sender == 'System'}
-        isMine={props.connectionReducer.connection.current.myId == item.Sender}
+        isMine={props.connectionReducer.connection.current.currentUser.UserID == item.Sender}
         memberName={
           memberInfo == null
             ? ''

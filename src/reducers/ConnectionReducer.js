@@ -95,11 +95,11 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       console.log(action.payload.packetPayload);
 
       EncryptionModule.encryptMessage(
-        action.payload.packetType,
+        action.payload.packetType.charCodeAt(0),
         action.payload.packetPayload,
         (packetToSend) => {
           onReceiveCallbacks.unshift({
-            type: String.fromCharCode(action.payload.packetType + 48),
+            type: action.payload.packetType,
             disposable: action.payload.disposable,
             callback: action.payload.callback,
           });
@@ -115,7 +115,7 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       }
       else{
         onReceiveCallbacks.unshift({
-          type: String.fromCharCode(action.payload.packetType + 48),
+          type: action.payload.packetType,
           id: action.payload.id,
           disposable: false,
           callback: action.payload.callback,
@@ -132,9 +132,9 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
       console.log(onReceiveCallbacks)
       return state;
 
-    case 'SET_SESSION_TOKEN_AND_ID':
+    case 'SET_SESSION_TOKEN_AND_USER_INFO':
       current['sessionToken'] = action.payload.sessionToken;
-      current['myId'] = action.payload.userId
+      current['currentUser'] = action.payload.userInfo
       return {current};
     default:
       return state;

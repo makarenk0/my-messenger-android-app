@@ -8,7 +8,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Animated
+  Animated,
 } from 'react-native';
 import {faUsers} from '@fortawesome/free-solid-svg-icons';
 
@@ -37,36 +37,30 @@ import {
 } from '../actions/LocalDBActions';
 
 import ChatRepresenter from './ChatRepresenter';
-import { resolvePlugin } from '@babel/core';
 
 const HomeScreen = (props) => {
   const [allChats, setAllChats] = useState([]);
-
+  const [assistantChatId, setAssistantChatId] = useState(props.connectionReducer.connection.current.currentUser.AssistantChatId);
   const [screenLoading, setScreenLoading] = useState(true);
-
-
 
   let logoAnim = useRef(new Animated.Value(0)).current;
 
-  const startLogoAnim = () =>{
+  const startLogoAnim = () => {
     Animated.timing(logoAnim, {
       toValue: 1,
       duration: 25000,
       useNativeDriver: true,
     }).start();
-  }
-  
-  const stopLogoAnim = () =>{
-    setScreenLoading(false)
+  };
+
+  const stopLogoAnim = () => {
+    setScreenLoading(false);
     Animated.timing(logoAnim, {
       toValue: 1,
       duration: 25000,
       useNativeDriver: true,
     }).stop();
-  }
-
-
-
+  };
 
   //after leaving chat screen clear new messages counter
   useEffect(() => {
@@ -121,10 +115,10 @@ const HomeScreen = (props) => {
     //adding all new messages to messages array
     console.log('adding all new messages to messages array');
     let addMessagesPromise = new Promise((resolve, reject) => {
-      props.addManyToArray({_id: chat.ChatId}, 'Messages', newMessages, () =>{
-        resolve()
+      props.addManyToArray({_id: chat.ChatId}, 'Messages', newMessages, () => {
+        resolve();
       });
-    })
+    });
     addMessagesPromise.then(() => {
       props.getProjected({_id: chat.ChatId}, {NewMessagesNum: 1}, (promise) => {
         promise.then((el) => {
@@ -135,13 +129,13 @@ const HomeScreen = (props) => {
               NewMessagesNum: el[0].NewMessagesNum + newMessages.length,
               LastMessageId: newMessages[newMessages.length - 1]._id,
             },
-            () => {console.log("New messages counter updated")}
+            () => {
+              console.log('New messages counter updated');
+            },
           );
         });
       });
-    })
-    
-   
+    });
   };
 
   const updateAllChatsToDisplay = (local, updated) => {
@@ -162,11 +156,19 @@ const HomeScreen = (props) => {
 
     //applying changes
     console.log('Changing all chats data to display');
+    local.sort((a, b) => {
+      if (
+        a.chatId === assistantChatId
+      ) {
+        return -1;
+      }
+      return 0;
+    });
     setAllChats(local);
   };
 
   useEffect(() => {
-    props.subscribeToUpdate(5, 'homescreen', (data) => {
+    props.subscribeToUpdate('5', 'homescreen', (data) => {
       console.log(data);
       console.log(data.IsNew);
       if (data.IsNew) {
@@ -190,8 +192,7 @@ const HomeScreen = (props) => {
   }, [allChats]);
 
   const zeroPacketRequest = (LastChatsMessages, ChatRepresentorsLocalData) => {
-    console.log("zero packet call")
-    
+    console.log('zero packet call');
 
     let regObj = {
       SessionToken: props.connectionReducer.connection.current.sessionToken,
@@ -200,7 +201,7 @@ const HomeScreen = (props) => {
     };
 
     //after "LastChatsMessages" array formed - send it to server and subscribe for real-time update on packet number 5
-    props.sendDataToServer(7, true, regObj, (response) => {
+    props.sendDataToServer('7', true, regObj, (response) => {
       let ChatRepresentorsUpdatedData = []; // this array will be a response data for "LastChatsMessages" array
       if (response.Status == 'error') {
         //in case of some error
@@ -286,47 +287,51 @@ const HomeScreen = (props) => {
             zeroPacketRequest([], []);
           },
         );
+      } else if (docs[0].ChatIds.length == 0) {
+        zeroPacketRequest([], []);
       } else {
-        if (docs[0].ChatIds.length == 0) {
-          zeroPacketRequest([], []);
-        } else {
-          let LastChatsMessages = []; //this array will be send to server and server will determine which new messages do you need (or new chats)
-          var ChatRepresentorsLocalData = []; // this array is formed with data of chats which are stored locally
+        let LastChatsMessages = []; //this array will be send to server and server will determine which new messages do you need (or new chats)
+        var ChatRepresentorsLocalData = []; // this array is formed with data of chats which are stored locally
 
-          let allPreojectionPromises = []; // as access to local db is async, each request for chat return promise, so to get all chats and then do something we should wait for all promises
-          docs[0].ChatIds.forEach((chatId) => {
-            console.log(chatId);
+        let allPreojectionPromises = []; // as access to local db is async, each request for chat return promise, so to get all chats and then do something we should wait for all promises
+        docs[0].ChatIds.forEach((chatId) => {
+          console.log(chatId);
 
-            //we need only projections (Only "LastMessageId" field, "ChatName" field and "Members" field )
-            props.getProjected(
-              {_id: chatId},
-              {LastMessageId: 1, ChatName: 1, Members: 1, NewMessagesNum: 1, IsGroup: 1},
-              (promise) => {
-                promise.then((lastMessageId) => {
-                  //pushing data from db to array
-                  ChatRepresentorsLocalData.push({
-                    chatId: chatId,
-                    chatName: lastMessageId[0].ChatName,
-                    chatMembers: lastMessageId[0].Members,
-                    isGroup: lastMessageId[0].IsGroup,
-                    newMessagesNum: lastMessageId[0].NewMessagesNum, //TO DO: create a field of number of new messages in db
-                  });
-                  //pushing "ChatId" and "LastMessageId" to array which will be send to server
-                  LastChatsMessages.push({
-                    ChatId: chatId,
-                    LastMessageId: lastMessageId[0].LastMessageId,
-                  });
+          //we need only projections (Only "LastMessageId" field, "ChatName" field and "Members" field )
+          props.getProjected(
+            {_id: chatId},
+            {
+              LastMessageId: 1,
+              ChatName: 1,
+              Members: 1,
+              NewMessagesNum: 1,
+              IsGroup: 1,
+            },
+            (promise) => {
+              promise.then((lastMessageId) => {
+                //pushing data from db to array
+                ChatRepresentorsLocalData.push({
+                  chatId: chatId,
+                  chatName: lastMessageId[0].ChatName,
+                  chatMembers: lastMessageId[0].Members,
+                  isGroup: lastMessageId[0].IsGroup,
+                  newMessagesNum: lastMessageId[0].NewMessagesNum, //TO DO: create a field of number of new messages in db
                 });
-                allPreojectionPromises.push(promise); //pushing all promises to array
-              },
-            );
-            //--------------------------------------------------------------------------------------------
-          });
-          // waiting for all requests are completed on database
-          Promise.all(allPreojectionPromises).then((res) => {
-            zeroPacketRequest(LastChatsMessages, ChatRepresentorsLocalData);
-          });
-        }
+                //pushing "ChatId" and "LastMessageId" to array which will be send to server
+                LastChatsMessages.push({
+                  ChatId: chatId,
+                  LastMessageId: lastMessageId[0].LastMessageId,
+                });
+              });
+              allPreojectionPromises.push(promise); //pushing all promises to array
+            },
+          );
+          //--------------------------------------------------------------------------------------------
+        });
+        // waiting for all requests are completed on database
+        Promise.all(allPreojectionPromises).then((res) => {
+          zeroPacketRequest(LastChatsMessages, ChatRepresentorsLocalData);
+        });
       }
     });
   }, []);
@@ -355,45 +360,64 @@ const HomeScreen = (props) => {
     outputRange: ['0deg', '4952deg'],
   });
 
-  
-
   return (
     <View style={{height: '100%'}}>
-      <View style={{height: 55, width: "100%", backgroundColor: "#1597bb", flexDirection: "row"}}>
-      <Button
-        style={{borderRadius: 25}}
-        containerStyle={{width: 50, marginTop: 5, marginLeft: 5, height: 45, borderRadius: 25}}
-        buttonStyle={{backgroundColor: "#1597bb", borderRadius: 25}}
-        icon={
-          <FontAwesomeIcon
-          icon={faBars}
-          size={25}
-          style={{marginTop: 2}}
-          onPress={() =>{props.navigation.openDrawer()}}
+      <View
+        style={{
+          height: 55,
+          width: '100%',
+          backgroundColor: '#1597bb',
+          flexDirection: 'row',
+        }}>
+        <Button
+          style={{borderRadius: 25}}
+          containerStyle={{
+            width: 50,
+            marginTop: 5,
+            marginLeft: 5,
+            height: 45,
+            borderRadius: 25,
+          }}
+          buttonStyle={{backgroundColor: '#1597bb', borderRadius: 25}}
+          icon={
+            <FontAwesomeIcon
+              icon={faBars}
+              size={25}
+              style={{marginTop: 2}}
+              onPress={() => {
+                props.navigation.openDrawer();
+              }}
+            />
+          }
         />
-        }
-      />
-      <Text style={{fontSize: 22, textAlignVertical:"center", paddingLeft: 10}}>Chats</Text>
-      
-      
-      <TouchableOpacity
-        style={{width: 50,height: 50, position:"absolute", top: 2, right: 5, height: 45}}
-        onPress={() =>{startLogoAnim()}}
-      >
-      <Animated.Image
+        <Text
+          style={{fontSize: 22, textAlignVertical: 'center', paddingLeft: 10}}>
+          Chats
+        </Text>
+
+        <TouchableOpacity
           style={{
-          transform: [{rotate: spin}],
-          width: 50,
-          height: 50,
-          alignSelf: 'center',
-          resizeMode: 'contain',
-          
-        }}
-       
-        source={require('../images/logoLoader.png')}
-        
-      />
-      </TouchableOpacity>
+            width: 50,
+            height: 50,
+            position: 'absolute',
+            top: 2,
+            right: 5,
+            height: 45,
+          }}
+          onPress={() => {
+            startLogoAnim();
+          }}>
+          <Animated.Image
+            style={{
+              transform: [{rotate: spin}],
+              width: 50,
+              height: 50,
+              alignSelf: 'center',
+              resizeMode: 'contain',
+            }}
+            source={require('../images/logoLoader.png')}
+          />
+        </TouchableOpacity>
       </View>
       <ScrollView>
         {allChats.map((x) => (
@@ -402,6 +426,7 @@ const HomeScreen = (props) => {
             chatId={x.chatId}
             chatName={x.chatName}
             newMessagesNum={x.newMessagesNum}
+            isAssistant={x.chatId === assistantChatId}
             isGroup={x.isGroup}
             onPress={chatPressed}></ChatRepresenter>
         ))}

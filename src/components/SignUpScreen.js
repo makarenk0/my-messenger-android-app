@@ -55,7 +55,7 @@ const SignUpScreen = (props) => {
     };
     setLoading(true)
 
-    props.sendDataToServer(1, true, regObj, (response) => {
+    props.sendDataToServer('1', true, regObj, (response) => {
         if (response.Status == 'error') {
           setErrorText(response.Details);
         }

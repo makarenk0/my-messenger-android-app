@@ -102,7 +102,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @ReactMethod//(isBlockingSynchronousMethod = true)
     public void encryptMessage(int packetType, String payloadJSON, Callback callBack){
-        byte[] result = pureAssemble((char)(packetType+'0'), payloadJSON);
+        byte[] result = pureAssemble((char)(packetType), payloadJSON);
         callBack.invoke(new String(result));
     }
 
