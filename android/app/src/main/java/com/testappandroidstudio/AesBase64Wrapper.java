@@ -74,14 +74,9 @@ public class AesBase64Wrapper {
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public String decodeAndDecrypt(String encrypted) throws Exception {
-        Log.d("testappandroidstudio", String.format("Encrypted string: %s", encrypted));
-        Log.d("testappandroidstudio", String.format("Derived Key length: %d", _derivedKey.length));
-        Log.d("testappandroidstudio", String.format("Derived Key: %s", new String(Base64.getEncoder().encode(_derivedKey))));
         byte[] decodedValue = Base64.getDecoder().decode(getBytes(encrypted));
         Cipher c = getCipher(Cipher.DECRYPT_MODE);
-        Log.d("testappandroidstudio", "Cipher got successfully");
         byte[] decValue = c.doFinal(decodedValue);
-        Log.d("testappandroidstudio", "do Final done");
         return new String(decValue);
     }
 
@@ -102,11 +97,7 @@ public class AesBase64Wrapper {
 
     private Key generateKey() throws Exception {
         byte[] salt = getBytes(SALT);
-        //Log.d("testappandroidstudio", "Before custom generate key");
-        Log.d("testappandroidstudio", String.format("Aes iterations num: %d", _AESIterationsNum));
-        Log.d("testappandroidstudio", String.format("Key length: %d", _AESKeyLength/8));
         byte[] encoded = GenerateKey(_derivedKey, _derivedKey.length, salt, salt.length, _AESIterationsNum, _AESKeyLength/8);
-        //Log.d("testappandroidstudio", "Before SecretKeySpec");
         return new SecretKeySpec(encoded, "AES");
     }
     public byte[] GenerateKey(final byte[] masterPassword, int masterPasswordLen,
