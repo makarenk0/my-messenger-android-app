@@ -39,3 +39,10 @@ export const setSessionTokenAndUserInfo = (token, userInfo) => (
     payload: {"sessionToken": token, "userInfo": userInfo}
   }
 );
+
+export const destroyConnection = (callback) => (
+  {
+    type: 'DESTROY_CONNECTION',
+    payload: {"callback": callback}
+  }
+);

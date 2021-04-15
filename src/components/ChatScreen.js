@@ -42,12 +42,15 @@ const ChatScreen = (props) => {
   const [allMessages, setAllMessages] = useState([]);
   const [reRenderFlag, setRerenderFlag] = useState(true);
   const [isGroup, setGroupFlag] = useState(false);
-  const [isAssistant, setAssistantFlag] = useState(chatId === props.connectionReducer.connection.current.currentUser.AssistantChatId);
+  const [isAssistant, setAssistantFlag] = useState(
+    chatId ===
+      props.connectionReducer.connection.current.currentUser.AssistantChatId,
+  );
   const [membersInfo, setMembersInfo] = useState([]);
-  const [selectedMessages, setSelectedMessages] = useState([])
+  const [selectedMessages, setSelectedMessages] = useState([]);
 
   //load members list
-  const getAllMembers = async (members) => {
+  const getAllMembers = (members) => {
     console.log('members');
     console.log(members);
     var membersAbsentLocally = [];
@@ -82,10 +85,14 @@ const ChatScreen = (props) => {
         console.log(finUsersObj);
         props.sendDataToServer('3', true, finUsersObj, (response) => {
           if (response.Status == 'success') {
-            setMembersInfo([...membersInfo, ...response.Users, ...membersPresentLocally]);
+            setMembersInfo([
+              ...membersInfo,
+              ...response.Users,
+              ...membersPresentLocally,
+            ]);
 
             response.Users.forEach((x) => {
-              x['Type'] = 'localUser'
+              x['Type'] = 'localUser';
               props.saveDocToDB(x, () => {});
             });
           } else {
@@ -93,11 +100,9 @@ const ChatScreen = (props) => {
             console.log(response.Details);
           }
         });
-      }
-      else{
+      } else {
         setMembersInfo([...membersInfo, ...membersPresentLocally]);
       }
-      
     });
   };
 
@@ -115,11 +120,16 @@ const ChatScreen = (props) => {
           ChatId: chatId,
           Body: toSend,
         };
-        props.sendDataToServer(isAssistant ? 'a' : '4', true, sendObj, (response) => {
-          console.log(response);
-          // setAllMessages([response, ...allMessages])
-          // setRerenderFlag(!reRenderFlag)
-        });
+        props.sendDataToServer(
+          isAssistant ? 'a' : '4',
+          true,
+          sendObj,
+          (response) => {
+            console.log(response);
+            // setAllMessages([response, ...allMessages])
+            // setRerenderFlag(!reRenderFlag)
+          },
+        );
       } else {
         let sendObj = {
           SessionToken: props.connectionReducer.connection.current.sessionToken,
@@ -147,9 +157,7 @@ const ChatScreen = (props) => {
   }, [allMessages]);
 
   const handleBackPress = () => {
-    props.navigation.navigate('Chats', {
-      backFromChat: chatId,
-    });
+
     BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
 
     props.unsubscribeFromUpdate('chatscreen', (removed) => {
@@ -157,7 +165,7 @@ const ChatScreen = (props) => {
       console.log(removed);
     });
 
-    return true;
+    //return true;
   };
 
   useEffect(() => {
@@ -170,12 +178,21 @@ const ChatScreen = (props) => {
 
   //getting chat data
   useEffect(() => {
-    props.loadDocFromDB({_id: chatId}, (err, docs) => {
+    let loadChatsPromise = new Promise((resolve, reject) => {
+      props.loadDocFromDB({_id: chatId}, (err, docs) => {
+        resolve(docs);
+      });
+    });
+    loadChatsPromise.then((docs) => {
       if (docs.length == 1) {
         let chat = docs[0];
         setAllMessages(chat.Messages.reverse());
         setGroupFlag(chat.IsGroup);
         getAllMembers(chat.Members);
+        props.updateValue(
+          {_id: chat._id},
+          {NewMessagesNum: 0},
+        );
       }
     });
   }, []);
@@ -184,7 +201,7 @@ const ChatScreen = (props) => {
     props.subscribeToUpdate('5', 'chatscreen', (data) => {
       if (data.ChatId == chatId) {
         let newMessages = data.NewMessages.reverse();
-        console.log(newMessages)
+        console.log(newMessages);
         setAllMessages([...newMessages, ...allMessages]);
         setRerenderFlag(!reRenderFlag);
       }
@@ -196,12 +213,7 @@ const ChatScreen = (props) => {
   //   console.log(allMessages)
   // }, [allMessages])
 
-  // action when leave screen
-  useEffect(() => {
-    const unsubscribe = props.navigation.addListener('beforeRemove', () => {});
-
-    return unsubscribe;
-  }, [props.navigation]);
+  
 
   const decapsulateDateFromId = (id) => {
     let decapsulatedDate = parseInt(id.substring(0, 8), 16) * 1000;
@@ -220,7 +232,10 @@ const ChatScreen = (props) => {
         body={item.Body}
         isGroup={isGroup}
         isSystem={item.Sender == 'System'}
-        isMine={props.connectionReducer.connection.current.currentUser.UserID == item.Sender}
+        isMine={
+          props.connectionReducer.connection.current.currentUser.UserID ==
+          item.Sender
+        }
         memberName={
           memberInfo == null
             ? ''

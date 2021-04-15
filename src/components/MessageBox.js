@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import {View, Text, StyleSheet, Image, Linking} from 'react-native';
+import {View, Text, StyleSheet, Linking} from 'react-native';
+import Image from 'react-native-scalable-image';
 
 const MessageBox = (props) => {
 
@@ -23,7 +24,7 @@ const MessageBox = (props) => {
             <Image
               key={i}
               source={{uri: words[i]}}
-              style={{width: "100%", height: 200}}
+              width={300}
             />,
           );
         } else {
@@ -51,7 +52,7 @@ const MessageBox = (props) => {
         style={
           props.isSystem
             ? {
-                maxWidth: "70%",
+                maxWidth: "80%",
                 backgroundColor: '#b8b5ff',
                 borderRadius: 5,
                 paddingLeft: 8,
@@ -60,7 +61,7 @@ const MessageBox = (props) => {
                 alignSelf: 'center',
               }
             : {
-                maxWidth: "70%",
+                maxWidth: "80%",
                 backgroundColor: props.isMine ? '#00BCD4' : '#03a9f4',
                 padding: 10,
                 borderRadius: 5,

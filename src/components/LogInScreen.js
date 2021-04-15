@@ -98,6 +98,7 @@ const LogInScreen = (props) => {
       if (response.Status == 'error') {
         setErrorText(response.Details);
       } else {
+        console.log(response.UserInfo)
         props.setSessionTokenAndUserInfo(response.SessionToken, response.UserInfo);
         let saveLogPassObj;
         if (rememberUser) {

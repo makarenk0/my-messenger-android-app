@@ -24,22 +24,17 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
         action.payload.onServerClosedConnection();
       });
 
-      // establishedConnection.on('close', function(){
-      //   console.log('Connection closed!');
-      // });
-      // establishedConnection.on('error', function(){
-      //   console.log('Error');
-      // });
+      
 
       current['establishedConnection'] = establishedConnection;
 
       current.establishedConnection.on('data', function (data) {
         let result = '';
+        console.log("RAW DATA")
         for (var i = 0; i < data.length; i++) {
           result += String.fromCharCode(parseInt(data[i]));
         }
         EncryptionModule.disassemblePacketFromReact(result, (disassembled) => {
-         
 
           disassembled.forEach((packetWithType) =>{
             let onReceive = onReceiveCallbacks.filter(
@@ -64,6 +59,15 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
 
 
         });
+      });
+
+
+      current.establishedConnection.on('close', function(){
+        console.log('Connection closed!');
+      });
+      current.establishedConnection.on('error', function(error){
+        console.log("ERROR");
+        console.log(error);
       });
 
       const newState = {current};
@@ -135,6 +139,10 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
     case 'SET_SESSION_TOKEN_AND_USER_INFO':
       current['sessionToken'] = action.payload.sessionToken;
       current['currentUser'] = action.payload.userInfo
+      return {current};
+    case 'DESTROY_CONNECTION':
+      current.establishedConnection.destroy()
+      action.payload.callback()
       return {current};
     default:
       return state;

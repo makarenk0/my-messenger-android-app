@@ -90,6 +90,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
         hash.update(sharedSecret);
         byte[] derivedKey = hash.digest();
 
+
         //Configuring Aes module
         AesBase64Wrapper.set_derivedKey(derivedKey); // setting derived key to aes encryption module
         AesBase64Wrapper.set_AESIterationsNum(aesIterationNum); // setting iterations number of aes algorithm
@@ -148,6 +149,7 @@ public class EncryptionModule extends ReactContextBaseJavaModule {
         try {
             decrypted = aesDecryptor.decodeAndDecrypt(encryptedData).getBytes();
         } catch (Exception e) {
+            Log.d("testappandroidstudio", e.getMessage());
             e.printStackTrace();
         }
         return decrypted;

@@ -2,6 +2,8 @@ package com.testappandroidstudio;
 
 import android.app.Application;
 import android.content.Context;
+import android.util.Log;
+
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.th3rdwave.safeareacontext.SafeAreaContextPackage;
@@ -29,6 +31,7 @@ public class MainApplication extends Application implements ReactApplication {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // packages.add(new MyReactNativePackage());
           packages.add(new EncryptionPackage());
+          Log.d("testappandroidstudio", String.format("Threre are packeges: %d",packages.size()));
           return packages;
         }
 

@@ -9,6 +9,7 @@ import {
   Text,
   TouchableOpacity,
   Animated,
+  BackHandler,
 } from 'react-native';
 import {faUsers} from '@fortawesome/free-solid-svg-icons';
 
@@ -23,6 +24,8 @@ import {
   connectToServer,
   sendDataToServer,
   subscribeToUpdate,
+  unsubscribeFromUpdate,
+  destroyConnection,
 } from '../actions/ConnectionActions';
 import {
   loadDB,
@@ -40,10 +43,53 @@ import ChatRepresenter from './ChatRepresenter';
 
 const HomeScreen = (props) => {
   const [allChats, setAllChats] = useState([]);
-  const [assistantChatId, setAssistantChatId] = useState(props.connectionReducer.connection.current.currentUser.AssistantChatId);
+  const [assistantChatId, setAssistantChatId] = useState(
+    props.connectionReducer.connection.current.currentUser.AssistantChatId,
+  );
   const [screenLoading, setScreenLoading] = useState(true);
+  const [currentChat, setCurrentChat] = useState('');
 
   let logoAnim = useRef(new Animated.Value(0)).current;
+
+
+  const handleBackPress = () => {
+    let unsubscribePromise = new Promise((resolve, reject) => {
+      props.unsubscribeFromUpdate('homescreen', (removed) => {
+        console.log('Subscription removed:');
+        console.log(removed);
+        resolve()
+      });
+    })
+    unsubscribePromise.then(() => {
+      let destroyPromise = new Promise((resolve, reject) => {
+        props.destroyConnection(() => {
+          console.log("Connection destroyd")
+          resolve()
+        })
+      })
+      destroyPromise.then(() => {
+        BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+        BackHandler.exitApp();
+      })
+    })     
+  };
+
+  useEffect(() => {
+    const unsubscribe = props.navigation.addListener('blur', () => {
+      BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+    });
+    return unsubscribe;
+  }, [props.navigation]);
+
+
+  useEffect(() => {
+    const unsubscribe = props.navigation.addListener('focus', () => {
+      BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    });
+    return unsubscribe;
+  }, [props.navigation]);
+
+
 
   const startLogoAnim = () => {
     Animated.timing(logoAnim, {
@@ -62,26 +108,13 @@ const HomeScreen = (props) => {
     }).stop();
   };
 
-  //after leaving chat screen clear new messages counter
   useEffect(() => {
-    if (props.route.params?.backFromChat) {
-      let backFromChatIndex = allChats.findIndex(
-        (x) => x.chatId == props.route.params.backFromChat,
-      );
-      console.log(backFromChatIndex);
-      let updated = allChats;
-      if (updated[backFromChatIndex] != null) {
-        updated[backFromChatIndex].newMessagesNum = 0;
-        setAllChats(updated);
+    const unsubscribe = props.navigation.addListener('focus', () => {
+      setCurrentChat('');
+    });
 
-        props.updateValue(
-          {_id: props.route.params.backFromChat},
-          {NewMessagesNum: 0},
-        );
-      }
-      props.navigation.setParams({backFromChat: null});
-    }
-  }, [props.route.params?.backFromChat]);
+    return unsubscribe;
+  }, [props.navigation]);
 
   const addNewChatToDB = (chat) => {
     let newMessages = chat.NewMessages;
@@ -110,8 +143,17 @@ const HomeScreen = (props) => {
     );
   };
 
+  const checkArrays = (arr1, arr2) => {
+    if (arr1.length !== arr2.length) {
+      return false;
+    }
+    return arr1.every((val) => arr2.includes(val));
+  };
+
   const updateExistingChatInDB = (chat) => {
     let newMessages = chat.NewMessages;
+    let members = chat.Members;
+
     //adding all new messages to messages array
     console.log('adding all new messages to messages array');
     let addMessagesPromise = new Promise((resolve, reject) => {
@@ -120,21 +162,31 @@ const HomeScreen = (props) => {
       });
     });
     addMessagesPromise.then(() => {
-      props.getProjected({_id: chat.ChatId}, {NewMessagesNum: 1}, (promise) => {
-        promise.then((el) => {
-          //updating "LastMessageId" field
-          props.updateValue(
-            {_id: chat.ChatId},
-            {
-              NewMessagesNum: el[0].NewMessagesNum + newMessages.length,
+      props.getProjected(
+        {_id: chat.ChatId},
+        {NewMessagesNum: 1, Members: 1},
+        (promise) => {
+          promise.then((el) => {
+            console.log("Updating in DB")
+            console.log(currentChat)
+            let toUpdate = {
+              NewMessagesNum:
+                el[0].NewMessagesNum +
+                (chat.ChatId !== currentChat ? newMessages.length : 0),
               LastMessageId: newMessages[newMessages.length - 1]._id,
-            },
-            () => {
-              console.log('New messages counter updated');
-            },
-          );
-        });
-      });
+            };
+
+            //updating "Members" field in case of change
+            if (members != null && !checkArrays(members, el[0].Members)) {
+              toUpdate["Members"] = members
+            }
+            
+            props.updateValue({_id: chat.ChatId}, toUpdate, () => {
+              console.log('Local chat '+ chat.ChatId + " was updated");
+            });
+          });
+        },
+      );
     });
   };
 
@@ -143,7 +195,9 @@ const HomeScreen = (props) => {
     // increasing new messages counter
     local = local.map((x) => {
       let update = updated.find((y) => y.chatId == x.chatId);
-      if (typeof update !== 'undefined') {
+      console.log('CURRENT CHAT');
+      console.log(currentChat);
+      if (typeof update !== 'undefined' && update.chatId != currentChat) {
         //update counter only in case there is an update
         x.newMessagesNum += update.newMessagesNum;
       }
@@ -157,9 +211,7 @@ const HomeScreen = (props) => {
     //applying changes
     console.log('Changing all chats data to display');
     local.sort((a, b) => {
-      if (
-        a.chatId === assistantChatId
-      ) {
+      if (a.chatId === assistantChatId) {
         return -1;
       }
       return 0;
@@ -189,7 +241,7 @@ const HomeScreen = (props) => {
       });
       updateAllChatsToDisplay(allChats, ChatRepresentorsUpdatedData);
     });
-  }, [allChats]);
+  }, [allChats, currentChat]);
 
   const zeroPacketRequest = (LastChatsMessages, ChatRepresentorsLocalData) => {
     console.log('zero packet call');
@@ -338,6 +390,13 @@ const HomeScreen = (props) => {
 
   // in case of chat is pressed (navigating to "ChatScreen" and passing chatId )
   const chatPressed = (chatId, chatName) => {
+    setCurrentChat(chatId);
+
+    let goToChatIndex = allChats.findIndex((x) => x.chatId == chatId);
+    let updated = allChats;
+    updated[goToChatIndex].newMessagesNum = 0;
+    setAllChats(updated);
+
     props.navigation.navigate('ChatScreen', {
       chatId: chatId,
       chatName: chatName,
@@ -477,6 +536,8 @@ const mapDispatchToProps = (dispatch) =>
       removeFromArray,
       getProjected,
       updateValue,
+      destroyConnection,
+      unsubscribeFromUpdate,
     },
     dispatch,
   );

@@ -11,8 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {removeDocFromDB, updateValue} from '../actions/LocalDBActions';
-import {unsubscribeFromUpdate} from '../actions/ConnectionActions';
-import {StackActions} from '@react-navigation/native';
+import {unsubscribeFromUpdate, destroyConnection} from '../actions/ConnectionActions';
+import {CommonActions} from '@react-navigation/native';
 import {Button} from 'react-native-elements';
 
 import {
@@ -30,18 +30,52 @@ import {
 const DrawerContent = (props) => {
   const logOut = async () => {
     //remove all user data (saved chats, other data)
-    props.removeDocFromDB({}, true, (err, numberOfRemoved) => {
-      console.log('All user data removed');
-      console.log(numberOfRemoved);
-    });
-    await AsyncStorage.setItem('loginData', JSON.stringify({remember: false})); //disabling auto log in
+    let removeDocsPromise = new Promise((resolve, reject) => {
+      props.removeDocFromDB({}, true, (err, numberOfRemoved) => {
+        console.log('All user data removed');
+        console.log(numberOfRemoved);
+        resolve()
+      });
+    })
+    removeDocsPromise.then(() => {
+      AsyncStorage.setItem('loginData', JSON.stringify({remember: false})); //disabling auto log in
+      
+      
+      let unsubscribePromise = new Promise((resolve, reject) => {
+        props.unsubscribeFromUpdate('homescreen', (removed) => {
+          console.log('Subscription removed:');
+          console.log(removed);
+          resolve()
+        });
+      })
+      unsubscribePromise.then(() => {
+        let destroyPromise = new Promise((resolve, reject) => {
+          props.destroyConnection(() => {
+            console.log("Connection destroyd")
+            resolve()
+          })
+        })
+        destroyPromise.then(() => {
+          props.navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [
+                { name: 'Log In' },
+              ],
+            })
+          );
+        })
+        
+      })
 
-    props.unsubscribeFromUpdate('homescreen', (removed) => {
-      console.log('Subscription removed:');
-      console.log(removed);
-    });
+      
+    
+    })
+    
 
-    props.navigation.dispatch(StackActions.replace('Log In', {}));
+   
+   
+    //props.navigation.dispatch(StackActions.replace('Log In', {}));
   };
   return (
     <DrawerContentScrollView {...props}>
@@ -95,6 +129,7 @@ const mapDispatchToProps = (dispatch) =>
       removeDocFromDB,
       updateValue,
       unsubscribeFromUpdate,
+      destroyConnection,
     },
     dispatch,
   );
