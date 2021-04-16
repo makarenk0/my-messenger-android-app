@@ -34,11 +34,11 @@ import {
   getProjected,
   updateValue,
 } from '../actions/LocalDBActions';
-import MessageBox from './MessageBox';
-import MyMessage from './MyMessage';
-import OtherUserPrivateMessage from './OtherUserPrivateMessage';
-import OtherUserPublicMessage from './OtherUserPublicMessage';
-import SystemMessage from './SystemMessage';
+
+import MyMessage from './MessageContainers/MyMessage';
+import OtherUserPrivateMessage from './MessageContainers/OtherUserPrivateMessage';
+import OtherUserPublicMessage from './MessageContainers/OtherUserPublicMessage';
+import SystemMessage from './MessageContainers/SystemMessage';
 
 const ChatScreen = (props) => {
   const chatId = props.route.params.chatId;
