@@ -35,6 +35,10 @@ import {
   updateValue,
 } from '../actions/LocalDBActions';
 import MessageBox from './MessageBox';
+import MyMessage from './MyMessage';
+import OtherUserPrivateMessage from './OtherUserPrivateMessage';
+import OtherUserPublicMessage from './OtherUserPublicMessage';
+import SystemMessage from './SystemMessage';
 
 const ChatScreen = (props) => {
   const chatId = props.route.params.chatId;
@@ -61,7 +65,7 @@ const ChatScreen = (props) => {
       console.log('member iterate');
       promises.push(
         new Promise((resolve, reject) => {
-          props.loadDocFromDB({UserID: x}, (err, doc) => {
+          props.loadDocFromDB({UserId: x}, (err, doc) => {
             console.log(doc.length);
             if (doc.length > 0) {
               console.log('User info loaded locally');
@@ -135,7 +139,7 @@ const ChatScreen = (props) => {
           SessionToken: props.connectionReducer.connection.current.sessionToken,
           UserIds: [
             props.route.params.userId,
-            props.connectionReducer.connection.current.currentUser.UserID,
+            props.connectionReducer.connection.current.currentUser.UserId,
           ],
           Body: toSend,
         };
@@ -208,41 +212,46 @@ const ChatScreen = (props) => {
     });
   }, [allMessages]);
 
-  // useEffect(() => {
-  //   console.log("All messages changed!!!!!!!!!!!")
-  //   console.log(allMessages)
-  // }, [allMessages])
+
 
   
-
-  const decapsulateDateFromId = (id) => {
-    let decapsulatedDate = parseInt(id.substring(0, 8), 16) * 1000;
-    let date = new Date(decapsulatedDate);
-    return date.toTimeString().split(' ')[0].substr(0, 5);
-  };
-
   const renderItem = ({item}) => {
-    let memberInfoIndex = membersInfo.findIndex((x) => x.UserID == item.Sender);
+    let memberInfoIndex = membersInfo.findIndex((x) => x.UserId == item.Sender);
     let memberInfo;
     if (memberInfoIndex != -1) {
       memberInfo = membersInfo[memberInfoIndex];
     }
-    return (
-      <MessageBox
-        body={item.Body}
-        isGroup={isGroup}
-        isSystem={item.Sender == 'System'}
-        isMine={
-          props.connectionReducer.connection.current.currentUser.UserID ==
-          item.Sender
-        }
-        memberName={
-          memberInfo == null
-            ? ''
-            : memberInfo.FirstName + ' ' + memberInfo.LastName
-        }
-        timestamp={decapsulateDateFromId(item._id)}></MessageBox>
-    );
+
+    if(props.connectionReducer.connection.current.currentUser.UserId === item.Sender){
+      return (<MyMessage id={item._id} body={item.Body}/>)
+    }
+    else if(item.Sender == 'System'){
+      return (<SystemMessage id={item._id} body={item.Body}/>)
+    }
+    else if(isGroup){
+      let senderName = (memberInfo == null ? '' : memberInfo.FirstName + ' ' + memberInfo.LastName)
+      return (<OtherUserPublicMessage id={item._id} senderName={senderName} body={item.Body}/>)
+    }
+    else{
+      return (<OtherUserPrivateMessage id={item._id} body={item.Body}/>)
+    }
+    return null
+    // return (
+    //   <MessageBox
+    //     id={item._id}
+    //     body={item.Body}
+    //     isGroup={isGroup}
+    //     isSystem={item.Sender == 'System'}
+    //     isMine={
+          
+    //     }
+    //     memberName={
+    //       memberInfo == null
+    //         ? ''
+    //         : memberInfo.FirstName + ' ' + memberInfo.LastName
+    //     }
+    //     timestamp={decapsulateDateFromId(item._id)}></MessageBox>
+    // );
   };
 
   const ChatThreadSeparator = (item) => {

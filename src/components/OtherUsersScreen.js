@@ -38,7 +38,7 @@ const OtherUsersScreen = (props) => {
 
   const loadLocalContacts = () =>{
     props.loadDocFromDB({Type: 'localUser'}, (err, docs) => {
-      let localContacts = docs.filter(x => x.UserID != props.connectionReducer.connection.current.currentUser.UserID)
+      let localContacts = docs.filter(x => x.UserId != props.connectionReducer.connection.current.currentUser.UserId)
       setResultUsers(localContacts)
     })
   }
@@ -81,7 +81,7 @@ const OtherUsersScreen = (props) => {
     return (
       <UserRepresenter
         border={true}
-        userId={item.UserID}
+        userId={item.UserId}
         userFirstName={item.FirstName}
         userLastName={item.LastName}
         userLogin={item.Login}
@@ -140,7 +140,7 @@ const OtherUsersScreen = (props) => {
         style={styles.usersThread}
         data={resultUsers}
         renderItem={renderItem}
-        keyExtractor={(item) => item.UserID}></FlatList>
+        keyExtractor={(item) => item.UserId}></FlatList>
     </View>
   );
 };
