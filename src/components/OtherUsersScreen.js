@@ -25,6 +25,7 @@ import {
 } from '../actions/LocalDBActions';
 import {SEARCH_USERS_WAIT_TIMEOUT} from '../configs';
 import UserRepresenter from './UserRepresenter';
+import {isEmptyOrSpaces} from "./Utilities";
 
 const OtherUsersScreen = (props) => {
   const [searchField, setSearchField] = useState('');
@@ -32,13 +33,10 @@ const OtherUsersScreen = (props) => {
   const [userInputTimer, setUserInputTimer] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isEmptyOrSpaces = (str) => {
-    return str === null || str.match(/^ *$/) !== null;
-  };
 
   const loadLocalContacts = () =>{
     props.loadDocFromDB({Type: 'localUser'}, (err, docs) => {
-      let localContacts = docs.filter(x => x.UserID != props.connectionReducer.connection.current.currentUser.UserID)
+      let localContacts = docs.filter(x => x.UserId != props.connectionReducer.connection.current.currentUser.UserId)
       setResultUsers(localContacts)
     })
   }
@@ -81,7 +79,7 @@ const OtherUsersScreen = (props) => {
     return (
       <UserRepresenter
         border={true}
-        userId={item.UserID}
+        userId={item.UserId}
         userFirstName={item.FirstName}
         userLastName={item.LastName}
         userLogin={item.Login}
@@ -140,7 +138,7 @@ const OtherUsersScreen = (props) => {
         style={styles.usersThread}
         data={resultUsers}
         renderItem={renderItem}
-        keyExtractor={(item) => item.UserID}></FlatList>
+        keyExtractor={(item) => item.UserId}></FlatList>
     </View>
   );
 };

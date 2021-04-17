@@ -28,6 +28,8 @@ import {faUserPlus} from '@fortawesome/free-solid-svg-icons';
 import {faUserCheck} from '@fortawesome/free-solid-svg-icons';
 import UserRepresenter from './UserRepresenter';
 
+import {isEmptyOrSpaces} from "./Utilities";
+
 const CreateGroupChatScreen = (props) => {
   const [searchField, setSearchField] = useState('');
   const [chatName, setChatName] = useState('');
@@ -39,13 +41,11 @@ const CreateGroupChatScreen = (props) => {
   const [rerenderToAddFlag, setRerenderToAddFlag] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
 
-  const isEmptyOrSpaces = (str) => {
-    return str === null || str.match(/^ *$/) !== null;
-  };
+
 
   const createButtonPressed = () => {
-    let chatUserWithOwner = chatUsers.map(x => x.UserID)
-    chatUserWithOwner.push(props.connectionReducer.connection.current.currentUser.UserID)
+    let chatUserWithOwner = chatUsers.map(x => x.UserId)
+    chatUserWithOwner.push(props.connectionReducer.connection.current.currentUser.UserId)
     let sendObj = {
         SessionToken: props.connectionReducer.connection.current.sessionToken,
         UserIds: chatUserWithOwner,
@@ -85,7 +85,7 @@ const CreateGroupChatScreen = (props) => {
           console.log(response.Users);
           let all = response.Users;
           all = all.filter(
-            (x) => chatUsers.findIndex((y) => y.UserID == x.UserID) == -1,
+            (x) => chatUsers.findIndex((y) => y.UserId == x.UserId) == -1,
           );
           setResultUsers(all);
         } else {
@@ -99,7 +99,7 @@ const CreateGroupChatScreen = (props) => {
   const searchUsers = ({item}) => {
     return (
       <UserRepresenter
-        userId={item.UserID}
+        userId={item.UserId}
         userFirstName={item.FirstName}
         userLastName={item.LastName}
         userLogin={item.Login}
@@ -111,7 +111,7 @@ const CreateGroupChatScreen = (props) => {
   const addedUsers = ({item}) => {
     return (
       <UserRepresenter
-        userId={item.UserID}
+        userId={item.UserId}
         userFirstName={item.FirstName}
         userLastName={item.LastName}
         userLogin={item.Login}
@@ -121,12 +121,12 @@ const CreateGroupChatScreen = (props) => {
   };
 
   const userToAddPressed = (userId, userName) => {
-    let user = resultUsers.find((x) => x.UserID == userId);
+    let user = resultUsers.find((x) => x.UserId == userId);
 
     setChatUsers([...chatUsers, user]);
     let all = resultUsers;
     console.log(userId);
-    all = all.filter((x) => x.UserID != userId);
+    all = all.filter((x) => x.UserId != userId);
     console.log(all);
     setResultUsers(all);
     setRerenderToAddFlag(!rerenderToAddFlag);
@@ -134,7 +134,7 @@ const CreateGroupChatScreen = (props) => {
 
   const userAddedPressed = (userId, userName) => {
     let users = chatUsers;
-    users = users.filter((x) => x.UserID != userId);
+    users = users.filter((x) => x.UserId != userId);
     setChatUsers(users);
     setRerenderMembersFlag(!rerenderMembersFlag);
     //setSearchField(searchField.substr(0, searchField.length))
@@ -164,7 +164,7 @@ const CreateGroupChatScreen = (props) => {
             data={chatUsers}
             renderItem={addedUsers}
             extraData={rerenderMembersFlag}
-            keyExtractor={(item) => item.UserID}></FlatList>
+            keyExtractor={(item) => item.UserId}></FlatList>
         )}
       </Card>
       <Card containerStyle={{width: '100%', minHeight: 500, margin: 0, paddingTop: 5}}>
@@ -194,7 +194,7 @@ const CreateGroupChatScreen = (props) => {
           style={styles.usersThread}
           data={resultUsers}
           renderItem={searchUsers}
-          keyExtractor={(item) => item.UserID}
+          keyExtractor={(item) => item.UserId}
           extraData={rerenderToAddFlag}></FlatList>
       </Card>
     </View>,

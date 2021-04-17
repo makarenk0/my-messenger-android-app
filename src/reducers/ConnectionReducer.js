@@ -35,7 +35,7 @@ const connectionReducer = (state = INITIAL_STATE, action) => {
           result += String.fromCharCode(parseInt(data[i]));
         }
         EncryptionModule.disassemblePacketFromReact(result, (disassembled) => {
-
+          console.log(disassembled)
           disassembled.forEach((packetWithType) =>{
             let onReceive = onReceiveCallbacks.filter(
               (x) => x.type == packetWithType.charAt(0),
