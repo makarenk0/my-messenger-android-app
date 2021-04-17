@@ -11,7 +11,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {removeDocFromDB, updateValue} from '../actions/LocalDBActions';
-import {unsubscribeFromUpdate, destroyConnection} from '../actions/ConnectionActions';
+import {
+  unsubscribeFromUpdate,
+  destroyConnection,
+} from '../actions/ConnectionActions';
 import {CommonActions} from '@react-navigation/native';
 import {Button} from 'react-native-elements';
 
@@ -34,62 +37,51 @@ const DrawerContent = (props) => {
       props.removeDocFromDB({}, true, (err, numberOfRemoved) => {
         console.log('All user data removed');
         console.log(numberOfRemoved);
-        resolve()
+        resolve();
       });
-    })
+    });
     removeDocsPromise.then(() => {
       AsyncStorage.setItem('loginData', JSON.stringify({remember: false})); //disabling auto log in
-      
-      
+
       let unsubscribePromise = new Promise((resolve, reject) => {
         props.unsubscribeFromUpdate('homescreen', (removed) => {
           console.log('Subscription removed:');
           console.log(removed);
-          resolve()
+          resolve();
         });
-      })
+      });
       unsubscribePromise.then(() => {
         let destroyPromise = new Promise((resolve, reject) => {
           props.destroyConnection(() => {
-            console.log("Connection destroyd")
-            resolve()
-          })
-        })
+            console.log('Connection destroyd');
+            resolve();
+          });
+        });
         destroyPromise.then(() => {
           props.navigation.dispatch(
             CommonActions.reset({
               index: 0,
-              routes: [
-                { name: 'Log In' },
-              ],
-            })
+              routes: [{name: 'Log In'}],
+            }),
           );
-        })
-        
-      })
+        });
+      });
+    });
 
-      
-    
-    })
-    
-
-   
-   
     //props.navigation.dispatch(StackActions.replace('Log In', {}));
   };
   return (
     <DrawerContentScrollView {...props}>
-      <DrawerItemList {...props}/>
+      <DrawerItemList {...props} />
       <DrawerItem
         label="Help"
-        icon={() =>(<FontAwesomeIcon icon={faInfoCircle} size={25}/>)}
-        
-        labelStyle={{fontWeight: "bold", fontSize: 15}}
+        icon={() => <FontAwesomeIcon icon={faInfoCircle} size={25} />}
+        labelStyle={{fontWeight: 'bold', fontSize: 15}}
         onPress={() => Linking.openURL('https://google.com/')}
       />
       <Button
         onPress={logOut}
-        buttonStyle={{ justifyContent: 'flex-start', height: 50 }}
+        buttonStyle={{justifyContent: 'flex-start', height: 50}}
         containerStyle={{width: 260, height: 50, marginLeft: 10}}
         iconContainerStyle={{marginRight: 10}}
         icon={<FontAwesomeIcon icon={faSignOutAlt} size={25} />}

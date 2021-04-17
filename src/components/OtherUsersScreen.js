@@ -25,6 +25,7 @@ import {
 } from '../actions/LocalDBActions';
 import {SEARCH_USERS_WAIT_TIMEOUT} from '../configs';
 import UserRepresenter from './UserRepresenter';
+import {isEmptyOrSpaces} from "./Utilities";
 
 const OtherUsersScreen = (props) => {
   const [searchField, setSearchField] = useState('');
@@ -32,9 +33,6 @@ const OtherUsersScreen = (props) => {
   const [userInputTimer, setUserInputTimer] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const isEmptyOrSpaces = (str) => {
-    return str === null || str.match(/^ *$/) !== null;
-  };
 
   const loadLocalContacts = () =>{
     props.loadDocFromDB({Type: 'localUser'}, (err, docs) => {

@@ -28,6 +28,8 @@ import {faUserPlus} from '@fortawesome/free-solid-svg-icons';
 import {faUserCheck} from '@fortawesome/free-solid-svg-icons';
 import UserRepresenter from './UserRepresenter';
 
+import {isEmptyOrSpaces} from "./Utilities";
+
 const CreateGroupChatScreen = (props) => {
   const [searchField, setSearchField] = useState('');
   const [chatName, setChatName] = useState('');
@@ -39,9 +41,7 @@ const CreateGroupChatScreen = (props) => {
   const [rerenderToAddFlag, setRerenderToAddFlag] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
 
-  const isEmptyOrSpaces = (str) => {
-    return str === null || str.match(/^ *$/) !== null;
-  };
+
 
   const createButtonPressed = () => {
     let chatUserWithOwner = chatUsers.map(x => x.UserId)

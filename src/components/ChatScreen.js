@@ -35,6 +35,8 @@ import {
   updateValue,
 } from '../actions/LocalDBActions';
 
+import {isEmptyOrSpaces} from './Utilities'
+
 import MyMessage from './MessageContainers/MyMessage';
 import OtherUserPrivateMessage from './MessageContainers/OtherUserPrivateMessage';
 import OtherUserPublicMessage from './MessageContainers/OtherUserPublicMessage';
@@ -176,10 +178,6 @@ const ChatScreen = (props) => {
     BackHandler.addEventListener('hardwareBackPress', handleBackPress);
   }, []);
 
-  const isEmptyOrSpaces = (str) => {
-    return str === null || str.match(/^ *$/) !== null;
-  };
-
   //getting chat data
   useEffect(() => {
     let loadChatsPromise = new Promise((resolve, reject) => {
@@ -235,23 +233,6 @@ const ChatScreen = (props) => {
     else{
       return (<OtherUserPrivateMessage id={item._id} body={item.Body}/>)
     }
-    return null
-    // return (
-    //   <MessageBox
-    //     id={item._id}
-    //     body={item.Body}
-    //     isGroup={isGroup}
-    //     isSystem={item.Sender == 'System'}
-    //     isMine={
-          
-    //     }
-    //     memberName={
-    //       memberInfo == null
-    //         ? ''
-    //         : memberInfo.FirstName + ' ' + memberInfo.LastName
-    //     }
-    //     timestamp={decapsulateDateFromId(item._id)}></MessageBox>
-    // );
   };
 
   const ChatThreadSeparator = (item) => {
