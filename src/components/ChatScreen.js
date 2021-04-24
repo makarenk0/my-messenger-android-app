@@ -1,8 +1,9 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import {NavigationEvents} from '@react-navigation/native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
-import {Avatar} from 'react-native-elements';
+import {faEllipsisV} from '@fortawesome/free-solid-svg-icons';
+import {Avatar, Overlay} from 'react-native-elements';
 import {
   StyleSheet,
   ScrollView,
@@ -35,12 +36,13 @@ import {
   updateValue,
 } from '../actions/LocalDBActions';
 
-import {isEmptyOrSpaces} from './Utilities'
+import {isEmptyOrSpaces} from './Utilities';
 
 import MyMessage from './MessageContainers/MyMessage';
 import OtherUserPrivateMessage from './MessageContainers/OtherUserPrivateMessage';
 import OtherUserPublicMessage from './MessageContainers/OtherUserPublicMessage';
 import SystemMessage from './MessageContainers/SystemMessage';
+import GroupChatPanel from './GroupChatTabs/GroupChatPanel';
 
 const ChatScreen = (props) => {
   const chatId = props.route.params.chatId;
@@ -54,6 +56,8 @@ const ChatScreen = (props) => {
   );
   const [membersInfo, setMembersInfo] = useState([]);
   const [selectedMessages, setSelectedMessages] = useState([]);
+
+  const [chatTabVisibility, setChatTabVisibility] = useState(false);
 
   //load members list
   const getAllMembers = (members) => {
@@ -92,7 +96,7 @@ const ChatScreen = (props) => {
         props.sendDataToServer('3', true, finUsersObj, (response) => {
           if (response.Status == 'success') {
             setMembersInfo([
-              ...membersInfo,
+              //...membersInfo,
               ...response.Users,
               ...membersPresentLocally,
             ]);
@@ -107,7 +111,7 @@ const ChatScreen = (props) => {
           }
         });
       } else {
-        setMembersInfo([...membersInfo, ...membersPresentLocally]);
+        setMembersInfo([...membersPresentLocally]);
       }
     });
   };
@@ -163,7 +167,6 @@ const ChatScreen = (props) => {
   }, [allMessages]);
 
   const handleBackPress = () => {
-
     BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
 
     props.unsubscribeFromUpdate('chatscreen', (removed) => {
@@ -191,10 +194,7 @@ const ChatScreen = (props) => {
         setAllMessages(chat.Messages.reverse());
         setGroupFlag(chat.IsGroup);
         getAllMembers(chat.Members);
-        props.updateValue(
-          {_id: chat._id},
-          {NewMessagesNum: 0},
-        );
+        props.updateValue({_id: chat._id}, {NewMessagesNum: 0});
       }
     });
   }, []);
@@ -204,15 +204,16 @@ const ChatScreen = (props) => {
       if (data.ChatId == chatId) {
         let newMessages = data.NewMessages.reverse();
         console.log(newMessages);
+        if (data.Members != null) {
+          console.log('DATA CHAT MEMBERS:');
+          getAllMembers(data.Members);
+        }
         setAllMessages([...newMessages, ...allMessages]);
         setRerenderFlag(!reRenderFlag);
       }
     });
   }, [allMessages]);
 
-
-
-  
   const renderItem = ({item}) => {
     let memberInfoIndex = membersInfo.findIndex((x) => x.UserId == item.Sender);
     let memberInfo;
@@ -220,18 +221,27 @@ const ChatScreen = (props) => {
       memberInfo = membersInfo[memberInfoIndex];
     }
 
-    if(props.connectionReducer.connection.current.currentUser.UserId === item.Sender){
-      return (<MyMessage id={item._id} body={item.Body}/>)
-    }
-    else if(item.Sender == 'System'){
-      return (<SystemMessage id={item._id} body={item.Body}/>)
-    }
-    else if(isGroup){
-      let senderName = (memberInfo == null ? '' : memberInfo.FirstName + ' ' + memberInfo.LastName)
-      return (<OtherUserPublicMessage id={item._id} senderName={senderName} body={item.Body}/>)
-    }
-    else{
-      return (<OtherUserPrivateMessage id={item._id} body={item.Body}/>)
+    if (
+      props.connectionReducer.connection.current.currentUser.UserId ===
+      item.Sender
+    ) {
+      return <MyMessage id={item._id} body={item.Body} />;
+    } else if (item.Sender == 'System') {
+      return <SystemMessage id={item._id} body={item.Body} />;
+    } else if (isGroup) {
+      let senderName =
+        memberInfo == null
+          ? ''
+          : memberInfo.FirstName + ' ' + memberInfo.LastName;
+      return (
+        <OtherUserPublicMessage
+          id={item._id}
+          senderName={senderName}
+          body={item.Body}
+        />
+      );
+    } else {
+      return <OtherUserPrivateMessage id={item._id} body={item.Body} />;
     }
   };
 
@@ -272,6 +282,12 @@ const ChatScreen = (props) => {
 
   return (
     <View style={styles.mainContainer}>
+      <GroupChatPanel
+        chatId={chatId}
+        membersInfo={membersInfo}
+        chatTabVisibility={chatTabVisibility}
+        setChatTabVisibility={setChatTabVisibility}
+      />
       <View style={styles.chatHeader}>
         <Avatar
           rounded
@@ -286,6 +302,18 @@ const ChatScreen = (props) => {
           activeOpacity={0.7}
         />
         <Text style={styles.chatName}>{props.route.params.chatName}</Text>
+        <TouchableOpacity
+          style={styles.infoButton}
+          onPress={() => {
+            setChatTabVisibility(true);
+            //sendMessage();
+          }}>
+          <FontAwesomeIcon
+            icon={faEllipsisV}
+            size={28}
+            style={styles.sendIcon}
+          />
+        </TouchableOpacity>
       </View>
       <View style={styles.messagesWindow}>
         <FlatList
@@ -378,6 +406,11 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   sendIcon: {},
+  infoButton: {
+    position: 'absolute',
+    right: 10,
+    top: 18,
+  },
 });
 
 const mapStateToProps = (state) => {
