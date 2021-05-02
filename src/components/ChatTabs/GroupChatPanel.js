@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Overlay, SearchBar} from 'react-native-elements';
+import {Overlay, SearchBar, Button, Icon, Tooltip} from 'react-native-elements';
 import UserRepresenter from './../UserRepresenter';
 import {
   StyleSheet,
@@ -12,11 +12,14 @@ import {
   FlatList,
   Modal,
   Pressable,
+  ToastAndroid,
 } from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faTimes} from '@fortawesome/free-solid-svg-icons';
 import {faUsersCog} from '@fortawesome/free-solid-svg-icons';
 import {faUserTimes} from '@fortawesome/free-solid-svg-icons';
+import {faSignOutAlt} from '@fortawesome/free-solid-svg-icons';
+import {faTimesCircle} from '@fortawesome/free-solid-svg-icons';
 
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
@@ -27,6 +30,13 @@ import {
   sendDataToServer,
   subscribeToUpdate,
 } from '../../actions/ConnectionActions';
+import {
+  removeDocFromDB,
+  loadDocFromDB,
+  saveDocToDB,
+  updateValue,
+} from '../../actions/LocalDBActions';
+
 import {isEmptyOrSpaces} from '../Utilities';
 
 const GroupChatPanel = (props) => {
@@ -83,7 +93,11 @@ const GroupChatPanel = (props) => {
         userLastName={item.LastName}
         userLogin={item.Login}
         backgroundColor="#F5F5F5"
-        userPressed={() => {userToAddPressed(item.UserId)}}></UserRepresenter>
+        userPressed={() => {
+          if (props.isAdmin) {
+            userToAddPressed(item.UserId);
+          }
+        }}></UserRepresenter>
     );
   };
 
@@ -94,10 +108,16 @@ const GroupChatPanel = (props) => {
         userFirstName={item.FirstName}
         userLastName={item.LastName}
         userLogin={item.Login}
+        isMe={props.connectionReducer.connection.current.currentUser.UserId == item.UserId}
         backgroundColor="#F5F5F5"
         userPressed={() => {
-          setSelectedMember(item.UserId);
-          setModalVisible(true);
+          if(props.connectionReducer.connection.current.currentUser.UserId == item.UserId && props.isAdmin){
+            ToastAndroid.show("You can't perform actions on yourself", ToastAndroid.SHORT);
+          }
+          else if (props.isAdmin) {
+            setSelectedMember(item.UserId);
+            setModalVisible(true);
+          }
         }}></UserRepresenter>
     );
   };
@@ -113,7 +133,7 @@ const GroupChatPanel = (props) => {
     };
     props.sendDataToServer('p', true, sendObj, (response) => {
       if (response.Status === 'success') {
-          props.setChatTabVisibility(false)
+        //props.setChatTabVisibility(false);
       } else {
         console.log(response);
       }
@@ -121,6 +141,44 @@ const GroupChatPanel = (props) => {
 
     users = users.filter((x) => x.UserId != userId);
     setChatMembers(users);
+  };
+
+
+
+  const transferAdminRights = (userId) => {
+    let sendObj = {
+      EventType: 4,
+      ChatId: props.chatId,
+      EventData: {
+        UserId: userId,
+      },
+    };
+    props.sendDataToServer('p', true, sendObj, (response) => {
+      if (response.Status === 'success') {
+      } else {
+        console.log(response);
+      }
+    });
+    setModalVisible(false);
+    props.setChatTabVisibility(false);
+  };
+
+
+  const leavePublicChat = () => {
+    let sendObj = {
+      EventType: 1,
+      ChatId: props.chatId,
+      EventData: {},
+    };
+    props.sendDataToServer("p", true, sendObj, (response) => {
+      if (response.Status === "success") {
+        
+      } else {
+        console.log(response);
+      }
+    });
+    props.setChatTabVisibility(false)
+    props.onLeaveChat();
   };
 
   const userToAddPressed = (userId) => {
@@ -133,8 +191,8 @@ const GroupChatPanel = (props) => {
         UserId: userId,
       },
     };
-    props.sendDataToServer("p", true, sendObj, (response) => {
-      if (response.Status === "success") {
+    props.sendDataToServer('p', true, sendObj, (response) => {
+      if (response.Status === 'success') {
       } else {
         console.log(response);
       }
@@ -181,6 +239,7 @@ const GroupChatPanel = (props) => {
                   style={styles.kickButton}
                   onPress={() => {
                     kickMember(selectedMember);
+                    setModalVisible(!modalVisible);
                   }}>
                   <FontAwesomeIcon
                     icon={faUserTimes}
@@ -192,7 +251,11 @@ const GroupChatPanel = (props) => {
               </View>
 
               <View>
-                <TouchableOpacity style={styles.makeAdminButton}>
+                <TouchableOpacity
+                  style={styles.makeAdminButton}
+                  onPress={() => {
+                    transferAdminRights(selectedMember);
+                  }}>
                   <FontAwesomeIcon
                     icon={faUsersCog}
                     size={58}
@@ -222,33 +285,57 @@ const GroupChatPanel = (props) => {
         data={chatMembers}
         renderItem={chatMembersItem}
         keyExtractor={(item) => item.UserId}></FlatList>
-      <Text style={{fontSize: 20, fontWeight: '800', paddingBottom: 10}}>
-        Add new members:
-      </Text>
 
-      <SearchBar
-        style={styles.searchField}
-        containerStyle={{
-          backgroundColor: '#fff',
-          borderBottomWidth: 0,
-          borderTopWidth: 0,
-        }}
-        placeholder="Enter user login or name"
-        onChangeText={setSearchField}
-        value={searchField}
-        showLoading={loading}
-        lightTheme={true}
-        round={true}
-        loadingProps={{
-          animating: true,
-          color: 'black',
-        }}></SearchBar>
-      <FlatList
-        listKey={2}
-        style={{height: 250}}
-        data={resultUsers}
-        renderItem={searchUsers}
-        keyExtractor={(item) => item.UserId}></FlatList>
+      {props.isAdmin ? (
+        <View>
+          <Text style={{fontSize: 20, fontWeight: '800', paddingBottom: 10}}>
+            Add new members:
+          </Text>
+          <SearchBar
+            style={styles.searchField}
+            containerStyle={{
+              backgroundColor: '#fff',
+              borderBottomWidth: 0,
+              borderTopWidth: 0,
+            }}
+            placeholder="Enter user login or name"
+            onChangeText={setSearchField}
+            value={searchField}
+            showLoading={loading}
+            lightTheme={true}
+            round={true}
+            loadingProps={{
+              animating: true,
+              color: 'black',
+            }}></SearchBar>
+          <FlatList
+            listKey={2}
+            style={{maxHeight: 250, minHeight: 100}}
+            data={resultUsers}
+            renderItem={searchUsers}
+            keyExtractor={(item) => item.UserId}></FlatList>
+        </View>
+      ) : null}
+      <View style={{flexDirection: 'row'}}>
+        {/* <Tooltip popover={<Text>Info here</Text>} containerStyle={{width: '45%'}}> */}
+        <Button
+          disabled={props.isAdmin && chatMembers.length > 1}
+          title=" Leave"
+          containerStyle={{width: '45%'}}
+          buttonStyle={{backgroundColor: '#DC143C'}}
+          icon={<FontAwesomeIcon icon={faSignOutAlt} size={20} color="#fff" />}
+          onPress={() => {leavePublicChat()}}
+        />
+        {/* </Tooltip> */}
+        <Button
+          onPress={() => {
+            props.setChatTabVisibility(false);
+          }}
+          title=" Close"
+          containerStyle={{marginLeft: '10%', width: '45%'}}
+          icon={<FontAwesomeIcon icon={faTimesCircle} size={20} color="#fff" />}
+        />
+      </View>
     </Overlay>
   );
 };
@@ -315,12 +402,19 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
   },
+  leaveButton: {
+    backgroundColor: '#DC143C',
+    width: 70,
+    height: 30,
+    alignSelf: 'flex-end',
+  },
 });
 
 const mapStateToProps = (state) => {
-  const {connectionReducer} = state;
+  const {connectionReducer, localDBReducer} = state;
   return {
     connectionReducer,
+    localDBReducer
   };
 };
 
@@ -330,6 +424,10 @@ const mapDispatchToProps = (dispatch) =>
       connectToServer,
       sendDataToServer,
       subscribeToUpdate,
+      removeDocFromDB,
+      loadDocFromDB,
+      saveDocToDB,
+      updateValue
     },
     dispatch,
   );

@@ -44,11 +44,12 @@ const DrawerContent = (props) => {
       AsyncStorage.setItem('loginData', JSON.stringify({remember: false})); //disabling auto log in
 
       let unsubscribePromise = new Promise((resolve, reject) => {
-        props.unsubscribeFromUpdate('homescreen', (removed) => {
-          console.log('Subscription removed:');
-          console.log(removed);
-          resolve();
-        });
+        resolve()
+        // props.unsubscribeFromUpdate('homescreen', (removed) => {
+        //   console.log('Subscription removed:');
+        //   console.log(removed);
+        //   resolve();
+        // });
       });
       unsubscribePromise.then(() => {
         let destroyPromise = new Promise((resolve, reject) => {

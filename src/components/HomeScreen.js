@@ -278,6 +278,12 @@ const HomeScreen = (props) => {
       });
       updateAllChatsToDisplay(allChats, ChatRepresentorsUpdatedData);
     });
+    return function cleanup(){
+      props.unsubscribeFromUpdate('homescreen', (removed) => {
+        console.log('Subscription removed:');
+        console.log(removed);
+      });
+    }
   }, [allChats, currentChat]);
 
   const zeroPacketRequest = (LastChatsData, ChatRepresentorsLocalData) => {

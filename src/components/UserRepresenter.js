@@ -49,6 +49,7 @@ const UserRepresenter = (props) => {
             </Text>
             <Text style={styles.userLogin}>@{props.userLogin}</Text>
           </View>
+          {props.isMe ? <Text style={{position: 'absolute', right: 15, top: 25}}>(You)</Text> : null}
         </View>
       </TouchableHighlight>
     </View>
