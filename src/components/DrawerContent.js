@@ -16,7 +16,7 @@ import {
   destroyConnection,
 } from '../actions/ConnectionActions';
 import {CommonActions} from '@react-navigation/native';
-import {Button} from 'react-native-elements';
+import {Button, Avatar} from 'react-native-elements';
 
 import {
   StyleSheet,
@@ -44,7 +44,7 @@ const DrawerContent = (props) => {
       AsyncStorage.setItem('loginData', JSON.stringify({remember: false})); //disabling auto log in
 
       let unsubscribePromise = new Promise((resolve, reject) => {
-        resolve()
+        resolve();
         // props.unsubscribeFromUpdate('homescreen', (removed) => {
         //   console.log('Subscription removed:');
         //   console.log(removed);
@@ -73,6 +73,32 @@ const DrawerContent = (props) => {
   };
   return (
     <DrawerContentScrollView {...props}>
+      <View style={{flexDirection: 'row'}}>
+        <Avatar
+          rounded
+          size={80}
+          icon={{
+            name: 'user',
+            type: 'font-awesome',
+          }}
+          containerStyle={{
+            backgroundColor: '#ccc',
+            marginTop: 10,
+            marginBottom: 10,
+            marginLeft: 10,
+          }}
+          activeOpacity={0.7}
+        />
+        <View style={{marginLeft: 15, marginTop: 8}}>
+          <Text style={{fontSize: 20}}>
+            {props.connectionReducer.connection.current.currentUser.FirstName}{' '}
+            {props.connectionReducer.connection.current.currentUser.LastName}
+          </Text>
+          <Text style={{marginTop: 5, fontWeight: 'bold'}}>
+            @{props.connectionReducer.connection.current.currentUser.Login}
+          </Text>
+        </View>
+      </View>
       <DrawerItemList {...props} />
       <DrawerItem
         label="Help"
