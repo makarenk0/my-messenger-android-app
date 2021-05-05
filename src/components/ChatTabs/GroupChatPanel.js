@@ -178,7 +178,6 @@ const GroupChatPanel = (props) => {
       }
     });
     props.setChatTabVisibility(false)
-    props.onLeaveChat();
   };
 
   const userToAddPressed = (userId) => {

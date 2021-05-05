@@ -347,14 +347,14 @@ const ChatScreen = (props) => {
 
   return (
     <View style={styles.mainContainer}>
+      {isGroup ?
       <GroupChatPanel
         chatId={chatId}
         membersInfo={membersInfo}
         chatTabVisibility={chatTabVisibility}
         setChatTabVisibility={setChatTabVisibility}
-        onLeaveChat={leaveChat}
         isAdmin={props.connectionReducer.connection.current.currentUser.UserId == admin}
-      />
+      /> : null}
       <View style={styles.chatHeader}>
       {isAssistant ? (
             <Avatar
