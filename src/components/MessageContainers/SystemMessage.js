@@ -7,7 +7,7 @@ const SystemMessage = (props) => {
       id={props.id}
       senderName={null}
       body={props.body}
-
+      onPressMsg={(id) => {}}
       containerStyle={{alignItems: 'flex-start'}}
       messageBoxStyle={{
         maxWidth: '80%',

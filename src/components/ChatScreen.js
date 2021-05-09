@@ -3,7 +3,8 @@ import {NavigationEvents} from '@react-navigation/native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
 import {faEllipsisV} from '@fortawesome/free-solid-svg-icons';
-import {Avatar, Overlay} from 'react-native-elements';
+import {faTrash} from '@fortawesome/free-solid-svg-icons';
+import {Avatar, Overlay, Icon, Button} from 'react-native-elements';
 import {
   StyleSheet,
   ScrollView,
@@ -14,11 +15,12 @@ import {
   TouchableOpacity,
   FlatList,
   BackHandler,
+  Modal,
 } from 'react-native';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {showModal, hideModal} from '../actions/ModalActions';
-import { StackActions } from '@react-navigation/native';
+import {StackActions} from '@react-navigation/native';
 import {
   connectToServer,
   sendDataToServer,
@@ -58,6 +60,7 @@ const ChatScreen = (props) => {
   const [membersInfo, setMembersInfo] = useState([]);
   const [removedMembersInfo, setRemovedMembersInfo] = useState([]);
   const [selectedMessages, setSelectedMessages] = useState([]);
+  const [deleteMsgVisibility, setDeleteMsgVisibility] = useState(false);
   const [admin, setAdmin] = useState('');
   const [chatTabVisibility, setChatTabVisibility] = useState(false);
 
@@ -122,8 +125,8 @@ const ChatScreen = (props) => {
     let removedMembersIds = allMessages
       .filter((x) => {
         return (
-          x.Sender != "System" &&
-          x.Sender != "assistant" &&
+          x.Sender != 'System' &&
+          x.Sender != 'assistant' &&
           membersInfo.findIndex((y) => y.UserId === x.Sender) == -1
         );
       })
@@ -145,8 +148,8 @@ const ChatScreen = (props) => {
       UserIds: ids,
     };
     console.log(finUsersObj);
-    props.sendDataToServer("3", true, finUsersObj, (response) => {
-      if (response.Status == "success") {
+    props.sendDataToServer('3', true, finUsersObj, (response) => {
+      if (response.Status == 'success') {
         setRemovedMembersInfo([...response.Users]);
       } else {
         console.log(response.Status);
@@ -220,7 +223,7 @@ const ChatScreen = (props) => {
       if (docs.length == 1) {
         let chat = docs[0];
         setAllMessages(chat.Messages.reverse());
-        setAdmin(chat.Admin)
+        setAdmin(chat.Admin);
         setGroupFlag(chat.IsGroup);
         getAllMembers(chat.Members);
         props.updateValue({_id: chat._id}, {NewMessagesNum: 0});
@@ -234,55 +237,63 @@ const ChatScreen = (props) => {
         let newMessages = data.NewMessages.reverse();
         console.log(newMessages);
         if (data.Members != null) {
-          if(!data.Members.includes(props.connectionReducer.connection.current.currentUser.UserId)){
-            leaveChat()
-          }
-          else{
+          if (
+            !data.Members.includes(
+              props.connectionReducer.connection.current.currentUser.UserId,
+            )
+          ) {
+            leaveChat();
+          } else {
             console.log('DATA CHAT MEMBERS:');
             getAllMembers(data.Members);
           }
-          
         }
-        if(data.Admin != null){
-          setAdmin(data.Admin)
+        if (data.Admin != null) {
+          setAdmin(data.Admin);
         }
 
         setAllMessages([...newMessages, ...allMessages]);
         setRerenderFlag(!reRenderFlag);
       }
     });
-    return function cleanup(){
-      console.log("CLEANUP WORKS")
+    return function cleanup() {
+      console.log('CLEANUP WORKS');
       props.unsubscribeFromUpdate('chatscreen', (removed) => {
         console.log('Subscription removed:');
         console.log(removed);
       });
-    }
+    };
   }, [allMessages]);
 
   const renderItem = ({item}) => {
-    // let memberInfoIndex = membersInfo.findIndex((x) => x.UserId == item.Sender);
-    // let memberInfo;
-    // if (memberInfoIndex != -1) {
-    //   memberInfo = membersInfo[memberInfoIndex];
-    // }
+    if(item.IsDeleted){
+      return null;
+    }
 
     if (
       props.connectionReducer.connection.current.currentUser.UserId ===
       item.Sender
     ) {
-      return <MyMessage id={item._id} body={item.Body} />;
+      return (
+        <MyMessage
+          id={item._id}
+          body={item.Body}
+          isSelected={selectedMessages.includes(item._id)}
+          selectedMessageAction={selectedMessageAction}
+        />
+      );
     } else if (item.Sender == 'System') {
       return <SystemMessage id={item._id} body={item.Body} />;
     } else if (isGroup) {
-
-      let memberInfoIndex = membersInfo.findIndex((y) => y.UserId == item.Sender);
+      let memberInfoIndex = membersInfo.findIndex(
+        (y) => y.UserId == item.Sender,
+      );
       let memberInfo;
       if (memberInfoIndex != -1) {
         memberInfo = membersInfo[memberInfoIndex];
       } else {
         let removedMemberInfoIndex = removedMembersInfo.findIndex(
-          (y) => y.UserId == item.Sender
+          (y) => y.UserId == item.Sender,
         );
         memberInfo = removedMembersInfo[removedMemberInfoIndex];
       }
@@ -296,10 +307,27 @@ const ChatScreen = (props) => {
           id={item._id}
           senderName={senderName}
           body={item.Body}
+          isSelected={selectedMessages.includes(item._id)}
+          selectedMessageAction={selectedMessageAction}
         />
       );
     } else {
-      return <OtherUserPrivateMessage id={item._id} body={item.Body} />;
+      return (
+        <OtherUserPrivateMessage
+          id={item._id}
+          body={item.Body}
+          isSelected={selectedMessages.includes(item._id)}
+          selectedMessageAction={selectedMessageAction}
+        />
+      );
+    }
+  };
+
+  const selectedMessageAction = (id) => {
+    if (selectedMessages.includes(id)) {
+      setSelectedMessages(selectedMessages.filter((x) => x !== id));
+    } else {
+      setSelectedMessages([...selectedMessages, id]);
     }
   };
 
@@ -339,62 +367,145 @@ const ChatScreen = (props) => {
   };
 
   const leaveChat = () => {
-    
     const popAction = StackActions.pop(1);
-    props.navigation.dispatch(popAction)
-  
-  }
+    props.navigation.dispatch(popAction);
+  };
+
+  const deleteMessagesForUser = () => {
+    let sendObj = {
+      ChatId: chatId,
+      MessagesIds: selectedMessages,
+    };
+    props.sendDataToServer('d', true, sendObj, (response) => {
+      if (response.Status == 'success') {
+        selectedMessages.forEach(x => {
+          props.removeFromArray(
+            {_id: chatId},
+            {Messages: {_id: x}},
+            (err, docs) => {
+              console.log(docs);
+            },
+          );
+        })
+        setSelectedMessages([]);
+      }
+      setAllMessages(allMessages.filter(x => !selectedMessages.includes(x._id)))
+      setDeleteMsgVisibility(!deleteMsgVisibility);
+
+    });
+  };
 
   return (
     <View style={styles.mainContainer}>
-      {isGroup ?
-      <GroupChatPanel
-        chatId={chatId}
-        membersInfo={membersInfo}
-        chatTabVisibility={chatTabVisibility}
-        setChatTabVisibility={setChatTabVisibility}
-        isAdmin={props.connectionReducer.connection.current.currentUser.UserId == admin}
-      /> : null}
+      {isGroup ? (
+        <GroupChatPanel
+          chatId={chatId}
+          membersInfo={membersInfo}
+          chatTabVisibility={chatTabVisibility}
+          setChatTabVisibility={setChatTabVisibility}
+          isAdmin={
+            props.connectionReducer.connection.current.currentUser.UserId ==
+            admin
+          }
+        />
+      ) : null}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={deleteMsgVisibility}
+        onRequestClose={() => {
+          setDeleteMsgVisibility(!deleteMsgVisibility);
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text>
+              {selectedMessages.length} message(s) will be deleted for you
+              forever
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                marginTop: 20,
+                width: 160,
+              }}>
+              <View style={{marginRight: 50}}>
+                <Button
+                  buttonStyle={{backgroundColor: '#DC143C'}}
+                  title="Cancel"
+                  onPress={() => {
+                    setSelectedMessages([]);
+                    setDeleteMsgVisibility(!deleteMsgVisibility);
+                  }}></Button>
+              </View>
+              <View>
+                <Button
+                  title="Ok"
+                  onPress={() => {
+                    deleteMessagesForUser();
+                  }}></Button>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <View style={styles.chatHeader}>
-      {isAssistant ? (
-            <Avatar
-              rounded
-              size={55}
-              source={require('../images/assistant_logo.jpg')}
-              containerStyle={{
-                backgroundColor: '#ccc',
-                marginTop: 5,
-                marginBottom: 10,
-                marginLeft: 10,
-              }}
-              activeOpacity={0.7}
-            />
-          ) :(
-        <Avatar
-          rounded
-          size={55}
-          icon={{name: isGroup ? 'users' : 'user', type: 'font-awesome'}}
-          containerStyle={{
-            backgroundColor: '#ccc',
-            marginTop: 5,
-            marginBottom: 10,
-            marginLeft: 10,
-          }}
-          activeOpacity={0.7}
-        />)}
-        <Text style={styles.chatName}>{props.route.params.chatName}</Text>
-        {isGroup ? <TouchableOpacity
-          style={styles.infoButton}
-          onPress={() => {
-            setChatTabVisibility(true);
-            //sendMessage();
-          }}>
-          <FontAwesomeIcon
-            icon={faEllipsisV}
-            size={28}
-            style={styles.sendIcon}
+        {isAssistant ? (
+          <Avatar
+            rounded
+            size={55}
+            source={require('../images/assistant_logo.jpg')}
+            containerStyle={{
+              backgroundColor: '#ccc',
+              marginTop: 5,
+              marginBottom: 10,
+              marginLeft: 10,
+            }}
+            activeOpacity={0.7}
           />
-        </TouchableOpacity> : null}
+        ) : (
+          <Avatar
+            rounded
+            size={55}
+            icon={{name: isGroup ? 'users' : 'user', type: 'font-awesome'}}
+            containerStyle={{
+              backgroundColor: '#ccc',
+              marginTop: 5,
+              marginBottom: 10,
+              marginLeft: 10,
+            }}
+            activeOpacity={0.7}
+          />
+        )}
+        <Text style={styles.chatName}>{props.route.params.chatName}</Text>
+        <View style={styles.headerButtons}>
+          {selectedMessages.length > 0 ? (
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => {
+                setDeleteMsgVisibility(!deleteMsgVisibility);
+              }}>
+              <FontAwesomeIcon
+                icon={faTrash}
+                size={28}
+                style={styles.sendIcon}
+              />
+            </TouchableOpacity>
+          ) : null}
+          {isGroup ? (
+            <TouchableOpacity
+              style={styles.infoButton}
+              onPress={() => {
+                setChatTabVisibility(true);
+                //sendMessage();
+              }}>
+              <FontAwesomeIcon
+                icon={faEllipsisV}
+                size={28}
+                style={styles.sendIcon}
+              />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
       <View style={styles.messagesWindow}>
         <FlatList
@@ -487,10 +598,35 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   sendIcon: {},
-  infoButton: {
+  headerButtons: {
     position: 'absolute',
     right: 10,
     top: 18,
+    flexDirection: 'row',
+  },
+  deleteButton: {
+    marginRight: 12,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
 

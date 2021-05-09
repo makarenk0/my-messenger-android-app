@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet, Linking} from 'react-native';
+import {View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import Image from 'react-native-scalable-image';
 
 const ChatElement = (props) => {
@@ -45,7 +45,7 @@ const ChatElement = (props) => {
   };
 
   return (
-    <View style={props.containerStyle}>
+    <TouchableOpacity activeOpacity={1} style={props.containerStyle} onPress={() => {props.onPressMsg(props.id)}}>
       <View style={props.messageBoxStyle}>
         <Text style={props.senderNameStyle}>{props.senderName}</Text>
         {parseMessageContent(props.body)}
@@ -53,7 +53,7 @@ const ChatElement = (props) => {
           {decapsulateDateFromId(props.id)}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

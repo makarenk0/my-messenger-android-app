@@ -1,4 +1,4 @@
-import React from 'react';
+import React , { useState } from 'react';
 import ChatElement from './ChatElement';
 
 const OtherUserPublicMessage = (props) => {
@@ -7,10 +7,11 @@ const OtherUserPublicMessage = (props) => {
       id={props.id}
       senderName={props.senderName}
       body={props.body}
+      onPressMsg={(id) => {props.selectedMessageAction(id)}}
       containerStyle={{alignItems: 'flex-start'}}
       messageBoxStyle={{
         maxWidth: '80%',
-        backgroundColor: '#03a9f4',
+        backgroundColor: props.isSelected ? '#fd805d' : '#03a9f4',
         padding: 10,
         borderRadius: 5,
         marginTop: 10,
