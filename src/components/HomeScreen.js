@@ -10,11 +10,12 @@ import {
   TouchableOpacity,
   Animated,
   BackHandler,
+  FlatList,
 } from 'react-native';
 import {faUsers} from '@fortawesome/free-solid-svg-icons';
 
 import {FloatingAction} from 'react-native-floating-action';
-import {Button} from 'react-native-elements';
+import {Button, SearchBar} from 'react-native-elements';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faBars} from '@fortawesome/free-solid-svg-icons';
 import {connect} from 'react-redux';
@@ -38,16 +39,48 @@ import {
   getProjected,
   updateValue,
 } from '../actions/LocalDBActions';
+import {SEARCH_USERS_WAIT_TIMEOUT} from '../configs';
 
 import ChatRepresenter from './ChatRepresenter';
+import UserRepresenter from './UserRepresenter';
+import {isEmptyOrSpaces} from './Utilities';
 
 const HomeScreen = (props) => {
   const [allChats, setAllChats] = useState([]);
+  const [chatsToDisplay, setChatsToDisplay] = useState([]);
+
   const [assistantChatId, setAssistantChatId] = useState(
     props.connectionReducer.connection.current.currentUser.AssistantChatId,
   );
   const [screenLoading, setScreenLoading] = useState(true);
   const [currentChat, setCurrentChat] = useState('');
+
+  const [searchChats, setSearchChats] = useState('');
+
+  const [resultUsers, setResultUsers] = useState([]);
+
+  const [userInputTimer, setUserInputTimer] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setChatsToDisplay(allChats);
+  }, [allChats]);
+
+  useEffect(() => {
+    if (!isEmptyOrSpaces(searchChats)) {
+      setChatsToDisplay(
+        allChats.filter((x) => x.chatName.includes(searchChats)),
+      );
+    } else {
+      setChatsToDisplay(allChats);
+    }
+    if (userInputTimer !== '') {
+      clearTimeout(userInputTimer);
+    }
+    setLoading(true);
+    setUserInputTimer(setTimeout(requestToServer, SEARCH_USERS_WAIT_TIMEOUT));
+    setResultUsers([]);
+  }, [searchChats]);
 
   let logoAnim = useRef(new Animated.Value(0)).current;
 
@@ -167,8 +200,6 @@ const HomeScreen = (props) => {
           }
           //updating "Members" field in case of change
           if (chat.Members != null) {
-            
-            
             //removing chat if we were kicked(server won't send update to us on this chat)
             if (
               !chat.Members.includes(
@@ -176,9 +207,13 @@ const HomeScreen = (props) => {
               )
             ) {
               let removeChatPromise = new Promise((resolve, reject) => {
-                props.removeDocFromDB({"_id": chat.ChatId}, true, (err, numberOfRemoved) => {
-                  resolve();
-                });
+                props.removeDocFromDB(
+                  {_id: chat.ChatId},
+                  true,
+                  (err, numberOfRemoved) => {
+                    resolve();
+                  },
+                );
               });
               removeChatPromise.then(() => {
                 let loadPresentChats = new Promise((resolve, reject) => {
@@ -191,7 +226,8 @@ const HomeScreen = (props) => {
                     (x) => x != chat.ChatId,
                   );
                   props.updateValue(
-                    {Type: 'localChatsIds'}, {ChatIds: updatedLocalChatIds},
+                    {Type: 'localChatsIds'},
+                    {ChatIds: updatedLocalChatIds},
                     () => {},
                   );
                 });
@@ -278,12 +314,12 @@ const HomeScreen = (props) => {
       });
       updateAllChatsToDisplay(allChats, ChatRepresentorsUpdatedData);
     });
-    return function cleanup(){
+    return function cleanup() {
       props.unsubscribeFromUpdate('homescreen', (removed) => {
         console.log('Subscription removed:');
         console.log(removed);
       });
-    }
+    };
   }, [allChats, currentChat]);
 
   const zeroPacketRequest = (LastChatsData, ChatRepresentorsLocalData) => {
@@ -467,6 +503,56 @@ const HomeScreen = (props) => {
     outputRange: ['0deg', '4952deg'],
   });
 
+  const renderItem = ({item}) => {
+    return (
+      <UserRepresenter
+        border={true}
+        userId={item.UserId}
+        userFirstName={item.FirstName}
+        userLastName={item.LastName}
+        userLogin={item.Login}
+        userPressed={userPressed}></UserRepresenter>
+    );
+  };
+
+  const requestToServer = () => {
+    setLoading(false);
+    if (!isEmptyOrSpaces(searchChats)) {
+      let finUsersObj = {
+        SessionToken: props.connectionReducer.connection.current.sessionToken,
+        FindUsersRequest: searchChats,
+      };
+
+      props.sendDataToServer('3', true, finUsersObj, (response) => {
+        if (response.Status == 'success') {
+          console.log(response.Users);
+          setResultUsers(response.Users);
+        } else {
+          console.log(response.Status);
+          console.log(response.Details);
+        }
+      });
+    }
+  };
+
+  const userPressed = (userId, userName) => {
+    props.loadDocFromDB({ChatName: userName}, (err, chat) => {
+      let chatId = 'new';
+
+      console.log(chat)
+      if (chat.length > 0) {
+        console.log(chat)
+        chatId = chat[0]._id;
+      }
+
+      props.navigation.navigate('ChatScreen', {
+        chatId: chatId,
+        userId: userId,
+        chatName: userName,
+      });
+    });
+  };
+
   return (
     <View style={{height: '100%'}}>
       <View
@@ -497,10 +583,35 @@ const HomeScreen = (props) => {
             />
           }
         />
-        <Text
+        {/* <Text
           style={{fontSize: 22, textAlignVertical: 'center', paddingLeft: 10}}>
           Chats
-        </Text>
+        </Text> */}
+        <SearchBar
+          lightTheme
+          containerStyle={{
+            width: 280,
+            height: '100%',
+            backgroundColor: '#1597bb',
+            borderBottomColor: '#1597bb',
+            borderTopColor: '#1597bb',
+          }}
+          inputContainerStyle={{height: 40}}
+          inputStyle={{fontSize: 5}}
+          style={{
+            fontSize: 15,
+            textAlignVertical: 'center',
+            paddingLeft: 10,
+            borderColor: '#1597bb',
+          }}
+          placeholder="Search"
+          onChangeText={setSearchChats}
+          value={searchChats}
+          showLoading={loading}
+          loadingProps={{
+            animating: true,
+            color: 'black',
+          }}></SearchBar>
 
         <TouchableOpacity
           style={{
@@ -527,7 +638,7 @@ const HomeScreen = (props) => {
         </TouchableOpacity>
       </View>
       <ScrollView>
-        {allChats.map((x) => (
+        {chatsToDisplay.map((x) => (
           <ChatRepresenter
             key={x.chatId}
             chatId={x.chatId}
@@ -538,6 +649,30 @@ const HomeScreen = (props) => {
             onPress={chatPressed}></ChatRepresenter>
         ))}
       </ScrollView>
+      {
+        //test
+      }
+      {resultUsers.length !== 0 ? (
+        <Text
+          style={{
+            textAlign: 'center',
+            width: '100%',
+            paddingBottom: 8,
+            paddingTop: 8,
+            backgroundColor: '#1597bb',
+            fontWeight:'bold',
+          }}>
+          Global search
+        </Text>
+      ) : null}
+      <FlatList
+        style={{marginTop: 0}}
+        data={resultUsers}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.UserId}></FlatList>
+      {
+        //test
+      }
       <FloatingAction
         actions={actions}
         buttonSize={70}

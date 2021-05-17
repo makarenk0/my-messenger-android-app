@@ -60,7 +60,7 @@ const CreateGroupChatScreen = (props) => {
 
   useEffect(() => {
     console.log('can create ');
-    setCanCreate(chatUsers.length > 0 && chatName != '');
+    setCanCreate(chatUsers.length > 1 && chatName != '');
   }, [chatName, chatUsers]);
 
   useEffect(() => {
